@@ -78,6 +78,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="avatar-frames.js"></script>
+    <script src="couple-avatar-recognition.js"></script>
+    <script src="sticker-import.js"></script>
+    <script src="sticker-recognition.js"></script>
 
     <style></style>
 
@@ -1248,7 +1251,7 @@
                 id="fetch-minimax-speech-models-btn"
                 class="moe-btn-secondary"
               >
-                🎵 拉取语音模型
+                 拉取语音模型
               </button>
             </div>
           </div>
@@ -1707,6 +1710,629 @@
               </button>
 
               <div class="moe-divider"></div>
+
+              <h4
+                style="
+                  font-size: 14px;
+                  margin-bottom: 10px;
+                  color: var(--accent-color);
+                "
+              >
+                📂 本地硬盘自动备份
+              </h4>
+              <div
+                id="local-fs-backup-container"
+                style="
+                  margin-bottom: 10px;
+                  padding: 10px;
+                  background: rgba(0, 0, 0, 0.03);
+                  border-radius: 8px;
+                  border: 1px dashed #ccc;
+                "
+              >
+                <div style="margin-bottom: 8px">
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                    "
+                  >
+                    <span style="font-size: 13px; font-weight: bold"
+                      >备份文件夹:</span
+                    >
+                    <span
+                      id="local-backup-status-badge"
+                      style="
+                        font-size: 11px;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        background: #eee;
+                        color: #666;
+                      "
+                      >未选择</span
+                    >
+                  </div>
+                  <div
+                    id="local-backup-path-display"
+                    style="
+                      font-size: 11px;
+                      color: #666;
+                      word-break: break-all;
+                      margin-top: 4px;
+                      font-family: monospace;
+                    "
+                  >
+                    (点击下方按钮选择)
+                  </div>
+                </div>
+
+                <button
+                  id="select-local-backup-folder-btn"
+                  class="moe-btn-secondary"
+                  style="width: 100%; margin-bottom: 8px"
+                >
+                  📁 选择备份文件夹
+                </button>
+
+                <div class="form-group" style="margin-bottom: 5px">
+                  <label class="toggle-switch-label">
+                    <span class="toggle-switch-text">启用自动同步 </span>
+                    <input type="checkbox" id="local-auto-backup-switch" />
+                    <span class="toggle-switch-slider"></span>
+                  </label>
+                </div>
+                <p style="font-size: 11px; color: #888; margin: 0">
+                  开启后，数据变动时会自动同步保存到该文件夹。
+                </p>
+                <div
+                  id="local-backup-last-time"
+                  style="
+                    font-size: 11px;
+                    color: #28a745;
+                    margin-top: 5px;
+                    display: none;
+                  "
+                >
+                  上次备份: <span id="local-backup-time-text">--:--</span>
+                </div>
+              </div>
+
+              <div class="moe-divider"></div>
+
+              <h4
+                style="
+                  font-size: 14px;
+                  margin-bottom: 10px;
+                  color: var(--accent-color);
+                "
+              >
+                📂 本地硬盘自动备份
+              </h4>
+              <div
+                id="local-fs-backup-container"
+                style="
+                  margin-bottom: 10px;
+                  padding: 10px;
+                  background: rgba(0, 0, 0, 0.03);
+                  border-radius: 8px;
+                  border: 1px dashed #ccc;
+                "
+              >
+                <div style="margin-bottom: 8px">
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                    "
+                  >
+                    <span style="font-size: 13px; font-weight: bold"
+                      >备份文件夹:</span
+                    >
+                    <span
+                      id="local-backup-status-badge"
+                      style="
+                        font-size: 11px;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        background: #eee;
+                        color: #666;
+                      "
+                      >未选择</span
+                    >
+                  </div>
+                  <div
+                    id="local-backup-path-display"
+                    style="
+                      font-size: 11px;
+                      color: #666;
+                      word-break: break-all;
+                      margin-top: 4px;
+                      font-family: monospace;
+                    "
+                  >
+                    (点击下方按钮选择)
+                  </div>
+                </div>
+
+                <button
+                  id="select-local-backup-folder-btn"
+                  class="moe-btn-secondary"
+                  style="width: 100%; margin-bottom: 8px"
+                >
+                  📁 选择备份文件夹
+                </button>
+
+                <div class="form-group" style="margin-bottom: 5px">
+                  <label class="toggle-switch-label">
+                    <span class="toggle-switch-text">启用自动同步 </span>
+                    <input type="checkbox" id="local-auto-backup-switch" />
+                    <span class="toggle-switch-slider"></span>
+                  </label>
+                </div>
+                <p style="font-size: 11px; color: #888; margin: 0">
+                  开启后，数据变动时会自动同步保存到该文件夹。
+                </p>
+                <div
+                  id="local-backup-last-time"
+                  style="
+                    font-size: 11px;
+                    color: #28a745;
+                    margin-top: 5px;
+                    display: none;
+                  "
+                >
+                  上次备份: <span id="local-backup-time-text">--:--</span>
+                </div>
+              </div>
+
+              <div class="moe-divider"></div>
+
+              <h4
+                style="
+                  font-size: 14px;
+                  margin-bottom: 10px;
+                  color: var(--accent-color);
+                "
+              >
+                📂 本地硬盘自动备份
+              </h4>
+              <div
+                id="local-fs-backup-container"
+                style="
+                  margin-bottom: 10px;
+                  padding: 10px;
+                  background: rgba(0, 0, 0, 0.03);
+                  border-radius: 8px;
+                  border: 1px dashed #ccc;
+                "
+              >
+                <div style="margin-bottom: 8px">
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                    "
+                  >
+                    <span style="font-size: 13px; font-weight: bold"
+                      >备份文件夹:</span
+                    >
+                    <span
+                      id="local-backup-status-badge"
+                      style="
+                        font-size: 11px;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        background: #eee;
+                        color: #666;
+                      "
+                      >未选择</span
+                    >
+                  </div>
+                  <div
+                    id="local-backup-path-display"
+                    style="
+                      font-size: 11px;
+                      color: #666;
+                      word-break: break-all;
+                      margin-top: 4px;
+                      font-family: monospace;
+                    "
+                  >
+                    (点击下方按钮选择)
+                  </div>
+                </div>
+
+                <button
+                  id="select-local-backup-folder-btn"
+                  class="moe-btn-secondary"
+                  style="width: 100%; margin-bottom: 8px"
+                >
+                  📁 选择备份文件夹
+                </button>
+
+                <div class="form-group" style="margin-bottom: 5px">
+                  <label class="toggle-switch-label">
+                    <span class="toggle-switch-text">启用自动同步 </span>
+                    <input type="checkbox" id="local-auto-backup-switch" />
+                    <span class="toggle-switch-slider"></span>
+                  </label>
+                </div>
+                <p style="font-size: 11px; color: #888; margin: 0">
+                  开启后，数据变动时会自动同步保存到该文件夹。
+                </p>
+                <div
+                  id="local-backup-last-time"
+                  style="
+                    font-size: 11px;
+                    color: #28a745;
+                    margin-top: 5px;
+                    display: none;
+                  "
+                >
+                  上次备份: <span id="local-backup-time-text">--:--</span>
+                </div>
+              </div>
+
+              <div class="moe-divider"></div>
+
+              <h4
+                style="
+                  font-size: 14px;
+                  margin-bottom: 10px;
+                  color: var(--accent-color);
+                "
+              >
+                📂 本地硬盘自动备份
+              </h4>
+              <div
+                id="local-fs-backup-container"
+                style="
+                  margin-bottom: 10px;
+                  padding: 10px;
+                  background: rgba(0, 0, 0, 0.03);
+                  border-radius: 8px;
+                  border: 1px dashed #ccc;
+                "
+              >
+                <div style="margin-bottom: 8px">
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                    "
+                  >
+                    <span style="font-size: 13px; font-weight: bold"
+                      >备份文件夹:</span
+                    >
+                    <span
+                      id="local-backup-status-badge"
+                      style="
+                        font-size: 11px;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        background: #eee;
+                        color: #666;
+                      "
+                      >未选择</span
+                    >
+                  </div>
+                  <div
+                    id="local-backup-path-display"
+                    style="
+                      font-size: 11px;
+                      color: #666;
+                      word-break: break-all;
+                      margin-top: 4px;
+                      font-family: monospace;
+                    "
+                  >
+                    (点击下方按钮选择)
+                  </div>
+                </div>
+
+                <button
+                  id="select-local-backup-folder-btn"
+                  class="moe-btn-secondary"
+                  style="width: 100%; margin-bottom: 8px"
+                >
+                  📁 选择备份文件夹
+                </button>
+
+                <div class="form-group" style="margin-bottom: 5px">
+                  <label class="toggle-switch-label">
+                    <span class="toggle-switch-text">启用自动同步 </span>
+                    <input type="checkbox" id="local-auto-backup-switch" />
+                    <span class="toggle-switch-slider"></span>
+                  </label>
+                </div>
+                <p style="font-size: 11px; color: #888; margin: 0">
+                  开启后，数据变动时会自动同步保存到该文件夹。
+                </p>
+                <div
+                  id="local-backup-last-time"
+                  style="
+                    font-size: 11px;
+                    color: #28a745;
+                    margin-top: 5px;
+                    display: none;
+                  "
+                >
+                  上次备份: <span id="local-backup-time-text">--:--</span>
+                </div>
+              </div>
+
+              <div class="moe-divider"></div>
+
+              <h4
+                style="
+                  font-size: 14px;
+                  margin-bottom: 10px;
+                  color: var(--accent-color);
+                "
+              >
+                📂 本地硬盘自动备份
+              </h4>
+              <div
+                id="local-fs-backup-container"
+                style="
+                  margin-bottom: 10px;
+                  padding: 10px;
+                  background: rgba(0, 0, 0, 0.03);
+                  border-radius: 8px;
+                  border: 1px dashed #ccc;
+                "
+              >
+                <div style="margin-bottom: 8px">
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                    "
+                  >
+                    <span style="font-size: 13px; font-weight: bold"
+                      >备份文件夹:</span
+                    >
+                    <span
+                      id="local-backup-status-badge"
+                      style="
+                        font-size: 11px;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        background: #eee;
+                        color: #666;
+                      "
+                      >未选择</span
+                    >
+                  </div>
+                  <div
+                    id="local-backup-path-display"
+                    style="
+                      font-size: 11px;
+                      color: #666;
+                      word-break: break-all;
+                      margin-top: 4px;
+                      font-family: monospace;
+                    "
+                  >
+                    (点击下方按钮选择)
+                  </div>
+                </div>
+
+                <button
+                  id="select-local-backup-folder-btn"
+                  class="moe-btn-secondary"
+                  style="width: 100%; margin-bottom: 8px"
+                >
+                  📁 选择备份文件夹
+                </button>
+
+                <div class="form-group" style="margin-bottom: 5px">
+                  <label class="toggle-switch-label">
+                    <span class="toggle-switch-text">启用自动同步 </span>
+                    <input type="checkbox" id="local-auto-backup-switch" />
+                    <span class="toggle-switch-slider"></span>
+                  </label>
+                </div>
+                <p style="font-size: 11px; color: #888; margin: 0">
+                  开启后，数据变动时会自动同步保存到该文件夹。
+                </p>
+                <div
+                  id="local-backup-last-time"
+                  style="
+                    font-size: 11px;
+                    color: #28a745;
+                    margin-top: 5px;
+                    display: none;
+                  "
+                >
+                  上次备份: <span id="local-backup-time-text">--:--</span>
+                </div>
+              </div>
+
+              <div class="moe-divider"></div>
+
+              <h4
+                style="
+                  font-size: 14px;
+                  margin-bottom: 10px;
+                  color: var(--accent-color);
+                "
+              >
+                📂 本地硬盘自动备份
+              </h4>
+              <div
+                id="local-fs-backup-container"
+                style="
+                  margin-bottom: 10px;
+                  padding: 10px;
+                  background: rgba(0, 0, 0, 0.03);
+                  border-radius: 8px;
+                  border: 1px dashed #ccc;
+                "
+              >
+                <div style="margin-bottom: 8px">
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                    "
+                  >
+                    <span style="font-size: 13px; font-weight: bold"
+                      >备份文件夹:</span
+                    >
+                    <span
+                      id="local-backup-status-badge"
+                      style="
+                        font-size: 11px;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        background: #eee;
+                        color: #666;
+                      "
+                      >未选择</span
+                    >
+                  </div>
+                  <div
+                    id="local-backup-path-display"
+                    style="
+                      font-size: 11px;
+                      color: #666;
+                      word-break: break-all;
+                      margin-top: 4px;
+                      font-family: monospace;
+                    "
+                  >
+                    (点击下方按钮选择)
+                  </div>
+                </div>
+
+                <button
+                  id="select-local-backup-folder-btn"
+                  class="moe-btn-secondary"
+                  style="width: 100%; margin-bottom: 8px"
+                >
+                  📁 选择备份文件夹
+                </button>
+
+                <div class="form-group" style="margin-bottom: 5px">
+                  <label class="toggle-switch-label">
+                    <span class="toggle-switch-text">启用自动同步 </span>
+                    <input type="checkbox" id="local-auto-backup-switch" />
+                    <span class="toggle-switch-slider"></span>
+                  </label>
+                </div>
+                <p style="font-size: 11px; color: #888; margin: 0">
+                  开启后，数据变动时会自动同步保存到该文件夹。
+                </p>
+                <div
+                  id="local-backup-last-time"
+                  style="
+                    font-size: 11px;
+                    color: #28a745;
+                    margin-top: 5px;
+                    display: none;
+                  "
+                >
+                  上次备份: <span id="local-backup-time-text">--:--</span>
+                </div>
+              </div>
+
+              <div class="moe-divider"></div>
+
+              <h4
+                style="
+                  font-size: 14px;
+                  margin-bottom: 10px;
+                  color: var(--accent-color);
+                "
+              >
+                📂 本地硬盘自动备份
+              </h4>
+              <div
+                id="local-fs-backup-container"
+                style="
+                  margin-bottom: 10px;
+                  padding: 10px;
+                  background: rgba(0, 0, 0, 0.03);
+                  border-radius: 8px;
+                  border: 1px dashed #ccc;
+                "
+              >
+                <div style="margin-bottom: 8px">
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                    "
+                  >
+                    <span style="font-size: 13px; font-weight: bold"
+                      >备份文件夹:</span
+                    >
+                    <span
+                      id="local-backup-status-badge"
+                      style="
+                        font-size: 11px;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        background: #eee;
+                        color: #666;
+                      "
+                      >未选择</span
+                    >
+                  </div>
+                  <div
+                    id="local-backup-path-display"
+                    style="
+                      font-size: 11px;
+                      color: #666;
+                      word-break: break-all;
+                      margin-top: 4px;
+                      font-family: monospace;
+                    "
+                  >
+                    (点击下方按钮选择)
+                  </div>
+                </div>
+
+                <button
+                  id="select-local-backup-folder-btn"
+                  class="moe-btn-secondary"
+                  style="width: 100%; margin-bottom: 8px"
+                >
+                  📁 选择备份文件夹
+                </button>
+
+                <div class="form-group" style="margin-bottom: 5px">
+                  <label class="toggle-switch-label">
+                    <span class="toggle-switch-text">启用自动同步 </span>
+                    <input type="checkbox" id="local-auto-backup-switch" />
+                    <span class="toggle-switch-slider"></span>
+                  </label>
+                </div>
+                <p style="font-size: 11px; color: #888; margin: 0">
+                  开启后，数据变动时会自动同步保存到该文件夹。
+                </p>
+                <div
+                  id="local-backup-last-time"
+                  style="
+                    font-size: 11px;
+                    color: #28a745;
+                    margin-top: 5px;
+                    display: none;
+                  "
+                >
+                  上次备份: <span id="local-backup-time-text">--:--</span>
+                </div>
+              </div>
+
+              <div class="moe-divider"></div>
               <button class="moe-btn-danger" id="clear-orphaned-data-btn">
                  清理失效数据
               </button>
@@ -1724,6 +2350,45 @@
               >
                 🔧 一键修复 (修复数据结构错误)
               </button>
+
+              <div class="moe-divider"></div>
+              <div
+                id="persistent-storage-container"
+                style="
+                  margin-bottom: 10px;
+                  padding: 10px;
+                  background: rgba(0, 0, 0, 0.05);
+                  border-radius: 8px;
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 5px;
+                  "
+                >
+                  <span style="font-size: 14px; font-weight: bold"
+                    >持久化存储状态</span
+                  >
+                  <span
+                    id="persistent-storage-status"
+                    style="font-size: 12px; color: #666"
+                    >检测中...</span
+                  >
+                </div>
+                <p style="font-size: 12px; color: #888; margin-bottom: 8px">
+                  防止浏览器自动清理您的数据。
+                </p>
+                <button
+                  id="request-persistence-btn"
+                  class="moe-btn-secondary"
+                  style="width: 100%; display: none"
+                >
+                   开启持久化存储保护
+                </button>
+              </div>
               <button
                 class="moe-btn-danger"
                 id="factory-reset-btn"
@@ -2353,6 +3018,26 @@
               </svg>
             </button>
             <button
+              id="camera-capture-btn"
+              class="chat-action-icon-btn action-button"
+              title="拍照"
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </button>
+            <button
               id="transfer-btn"
               class="chat-action-icon-btn action-button"
               title="转账"
@@ -2600,6 +3285,32 @@
             </button>
 
             <button
+              id="open-chinese-divination-btn"
+              class="chat-action-icon-btn action-button"
+              title="梅花易数"
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <!-- 简单的六爻卦象图标 -->
+                <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                   <!-- 上卦 (示例: 离 - 实虚实) -->
+                   <path d="M5 4h14" />
+                   <path d="M5 8h6 M13 8h6" />
+                   <path d="M5 12h14" />
+                   <!-- 下卦 (示例: 坎 - 虚实虚) -->
+                   <path d="M5 16h6 M13 16h6" />
+                   <path d="M5 20h14" />
+                   <path d="M5 24h6 M13 24h6" transform="translate(0 -2)" /> <!-- 微调位置 -->
+                </g>
+              </svg>
+            </button>
+
+            <button
               id="pet-action-btn"
               class="chat-action-icon-btn action-button"
               title="我的宠物"
@@ -2735,6 +3446,10 @@
           </div>
 
           <div id="sticker-panel-footer" style="display: none">
+            <div style="flex: 1; display: flex; gap: 8px;">
+                <button id="select-all-stickers-btn" class="secondary-btn" style="padding: 6px 10px; font-size: 12px;">全选</button>
+                <button id="deselect-all-stickers-btn" class="secondary-btn" style="padding: 6px 10px; font-size: 12px;">取消</button>
+            </div>
             <!-- 移动表情按钮 -->
             <button id="move-selected-stickers-btn">移动到分类...</button>
             <!-- 删除表情按钮 -->
@@ -2753,6 +3468,13 @@
           type="file"
           id="image-upload-input"
           accept="image/*"
+          style="display: none"
+        />
+        <input
+          type="file"
+          id="camera-capture-input"
+          accept="image/*"
+          capture="environment"
           style="display: none"
         />
 
@@ -3191,23 +3913,47 @@
           <div class="settings-section-title"> 声音与背景</div>
 
           <div class="setting-item">
+            <label>来电铃声预设</label>
+            <div class="bubble-preset-manager">
+              <select id="ringtone-preset-select" class="moe-input"></select>
+              <button id="manage-ringtone-presets-btn" class="moe-btn-small">管理</button>
+            </div>
+          </div>
+
+          <div class="setting-item">
             <label>来电铃声 URL</label>
-            <input
-              type="text"
-              id="ringtone-url-input"
-              class="moe-input"
-              placeholder="音频链接..."
-            />
+            <div style="display: flex; gap: 8px;">
+              <input
+                type="text"
+                id="ringtone-url-input"
+                class="moe-input"
+                placeholder="音频链接..."
+                style="flex: 1;"
+              />
+              <button id="preview-ringtone-btn" class="moe-btn-small">试听</button>
+            </div>
+          </div>
+
+          <div class="setting-item" style="margin-top: 20px;">
+            <label>消息提示音预设</label>
+            <div class="bubble-preset-manager">
+              <select id="notification-preset-select" class="moe-input"></select>
+              <button id="manage-notification-presets-btn" class="moe-btn-small">管理</button>
+            </div>
           </div>
 
           <div class="setting-item">
             <label>提示音 URL</label>
-            <input
-              type="text"
-              id="notification-sound-url-input"
-              class="moe-input"
-              placeholder="音频链接..."
-            />
+            <div style="display: flex; gap: 8px;">
+              <input
+                type="text"
+                id="notification-sound-url-input"
+                class="moe-input"
+                placeholder="音频链接..."
+                style="flex: 1;"
+              />
+              <button id="preview-notification-btn" class="moe-btn-small">试听</button>
+            </div>
           </div>
 
           <div class="setting-item">
@@ -4668,6 +5414,10 @@
       </div>
       <!-- 用于批量删除的操作栏 -->
       <div id="char-sticker-footer" style="display: none">
+        <div style="flex: 1; display: flex; gap: 8px;">
+            <button id="select-all-char-stickers-btn" class="secondary-btn" style="padding: 6px 10px; font-size: 12px;">全选</button>
+            <button id="deselect-all-char-stickers-btn" class="secondary-btn" style="padding: 6px 10px; font-size: 12px;">取消</button>
+        </div>
         <button id="delete-selected-char-stickers-btn">删除已选 (0)</button>
       </div>
     </div>
@@ -5528,6 +6278,26 @@
                 </button>
               </div>
 
+              <!-- 识别按钮 -->
+              <div style="text-align: right; margin-bottom: 8px;">
+                <button
+                  id="recognize-current-avatar-btn"
+                  class="moe-btn-secondary"
+                  style="
+                    margin: 0;
+                    padding: 4px 12px;
+                    font-size: 12px;
+                    background-color: #e3f2fd;
+                    color: #2196f3;
+                    border: 1px solid #bbdefb;
+                    border-radius: 15px;
+                  "
+                  onclick="recognizeCurrentCoupleAvatar()"
+                >
+                   识别当前头像
+                </button>
+              </div>
+
               <div
                 id="couple-avatar-desc-container"
                 style="
@@ -5555,6 +6325,22 @@
                   placeholder="例如：一只小猫在看月亮"
                 />
               </div>
+            </div>
+
+            <!-- 表情包识别开关 -->
+            <div class="form-group" id="sticker-recognition-group" style="margin-top: 15px; border-top: 1px dashed #eee; padding-top: 15px;">
+               <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <label class="toggle-switch-label" style="margin: 0">
+                    <span class="toggle-switch-text" style="font-weight: 600; color: #555;">🧩 表情包智能识别</span>
+                    <input type="checkbox" id="enable-sticker-recognition-checkbox" />
+                    <span class="toggle-switch-slider"></span>
+                  </label>
+                  <div class="setting-help" style="margin-top: 5px; font-size: 11px; color: #999;">
+                    开启后，发送表情包时会自动识别内容并告诉角色
+                  </div>
+                </div>
+               </div>
             </div>
           </div>
 
@@ -8763,6 +9549,82 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
       </div>
     </div>
 
+    <!-- 梅花易数占卜主模态框 -->
+    <div id="chinese-divination-modal" class="modal">
+      <div class="modal-content" style="height: 85%; width: 95%">
+        <!-- 1. 占卜设置界面 -->
+        <div id="chinese-setup-view">
+          <div class="modal-header">
+            <span>梅花易数</span>
+            <div>
+              <span
+                id="close-chinese-modal-btn"
+                class="action-btn"
+                style="font-size: 16px"
+                >关闭</span
+              >
+            </div>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="chinese-question-input">您的问题</label>
+              <textarea
+                id="chinese-question-input"
+                rows="2"
+                placeholder="例如：这件事的发展趋势如何？"
+              ></textarea>
+            </div>
+            
+            <div class="form-group" style="text-align: center; margin-top: 40px;">
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    心诚则灵，点击下方按钮起卦
+                </p>
+                <div id="bagua-animation-container" style="font-size: 64px; margin-bottom: 20px; min-height: 80px;">
+                   ☯
+                </div>
+            </div>
+
+            <button
+              id="start-chinese-divination-btn"
+              class="form-button"
+              style="margin-top: 20px"
+            >
+              起卦
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. 占卜结果界面 (默认隐藏) -->
+        <div
+          id="chinese-result-view"
+          style="
+            display: none;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+          "
+        >
+          <div class="modal-header">
+            <span
+              id="back-to-chinese-setup-btn"
+              class="action-btn"
+              style="font-size: 16px"
+              >返回</span
+            >
+            <span>占卜结果</span>
+          </div>
+          <div class="modal-body" id="chinese-result-display">
+            <!-- 结果将由JS动态生成在这里 -->
+          </div>
+          <div class="modal-footer">
+            <button id="send-chinese-result-btn" class="save" style="width: 100%">
+              发给大师解读
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 2. 切换角色的弹窗 -->
     <div id="ls-char-selector-modal" class="modal">
       <div class="modal-content" style="height: 60%">
@@ -8935,6 +9797,48 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
           <span>情侣空间设置</span>
         </div>
         <div class="modal-body">
+          <div class="form-group">
+            <label for="ls-user-nickname-input">我的昵称</label>
+            <input
+              type="text"
+              id="ls-user-nickname-input"
+              placeholder="默认显示 {{user}}"
+              style="width: 100%; padding: 10px; box-sizing: border-box"
+            />
+          </div>
+          <div class="form-group" style="margin-top: 10px; margin-bottom: 20px;">
+            <label for="ls-char-nickname-input">对方昵称</label>
+            <input
+              type="text"
+              id="ls-char-nickname-input"
+              placeholder="默认显示角色名"
+              style="width: 100%; padding: 10px; box-sizing: border-box"
+            />
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+              <label>我的头像</label>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                  <img id="ls-settings-user-avatar-preview" src="" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background-color: #f0f0f0;">
+                  <div style="flex: 1;">
+                      <input type="text" id="ls-settings-user-avatar-input" placeholder="输入头像链接..." style="width: 100%; padding: 8px; box-sizing: border-box; margin-bottom: 5px;">
+                      <input type="file" id="ls-settings-user-avatar-file" accept="image/*" style="display: none;">
+                      <button class="form-button form-button-secondary" onclick="document.getElementById('ls-settings-user-avatar-file').click()" style="padding: 4px 10px; font-size: 12px; margin: 0;">上传本地图片</button>
+                  </div>
+              </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+              <label>对方头像</label>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                  <img id="ls-settings-char-avatar-preview" src="" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background-color: #f0f0f0;">
+                  <div style="flex: 1;">
+                      <input type="text" id="ls-settings-char-avatar-input" placeholder="输入头像链接..." style="width: 100%; padding: 8px; box-sizing: border-box; margin-bottom: 5px;">
+                      <input type="file" id="ls-settings-char-avatar-file" accept="image/*" style="display: none;">
+                      <button class="form-button form-button-secondary" onclick="document.getElementById('ls-settings-char-avatar-file').click()" style="padding: 4px 10px; font-size: 12px; margin: 0;">上传本地图片</button>
+                  </div>
+              </div>
+          </div>
           <div class="form-group">
             <label for="ls-start-date-input">我们在一起的第一天</label>
             <input
@@ -18055,8 +18959,10 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
         function initDatabase(userId) {
           // 数据库名带上用户ID，实现每个人数据隔离
           db = new Dexie("GeminiChatDB");
-          db.version(62).stores({
-            // 版本号从 51 升级到 52
+          db.version(64).stores({
+            // 版本号从 63 升级到 64，添加铃声和提示音预设支持
+            ringtonePresets: "++id, name, url",
+            notificationSoundPresets: "++id, name, url",
             chats:
               "&id, isGroup, groupId, ownerId, isPinned, characterPhoneData, latestInnerVoice, innerVoiceHistory, loversSpaceData.emotionDiaries, settings.summary, settings.weiboNickname, settings.innerVoiceHideHeaderBorder, settings.innerVoiceAdopterLabelFormat, interactionStats, unlockedSymbols, settings.selectedIntimacyBadge",
             apiConfig: "&id",
@@ -18080,7 +18986,7 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             themes: "++id, name, css",
             apiPresets: "++id, name, proxyUrl",
             bubbleStylePresets: "++id, name, css",
-            fontPresets: "&id, name, url",
+            fontPresets: "&id, name, url, slotIndex, isCustomSlot",
             homeScreenPresets: "++id, name",
             weiboPosts: "++id, authorId, timestamp",
             forumGroups: "++id, name, worldview, *categories",
@@ -18221,10 +19127,45 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
           applyTheme(newTheme);
         }
         /**
+         * 【数据迁移】为旧版本的字体预设数据添加 slotIndex 和 isCustomSlot 字段
+         */
+        async function migrateFontPresetsData() {
+          try {
+            const presets = await db.fontPresets.toArray();
+            if (presets.length === 0) return;
+
+            let needsMigration = false;
+            const migratedPresets = presets.map((preset, index) => {
+              // 检查是否缺少新字段
+              if (preset.slotIndex === undefined || preset.isCustomSlot === undefined) {
+                needsMigration = true;
+                return {
+                  ...preset,
+                  slotIndex: index < 10 ? index : index,
+                  isCustomSlot: index >= 10
+                };
+              }
+              return preset;
+            });
+
+            if (needsMigration) {
+              console.log(`正在迁移 ${presets.length} 个字体预设数据...`);
+              await db.fontPresets.bulkPut(migratedPresets);
+              console.log("字体预设数据迁移完成");
+            }
+          } catch (error) {
+            console.error("字体预设数据迁移失败:", error);
+          }
+        }
+
+        /**
          * 【全新】在应用启动时，预加载所有已保存的字体预设
          */
         async function loadAllFontPresetsOnStartup() {
           console.log("正在预加载所有字体预设...");
+          // 先执行数据迁移
+          await migrateFontPresetsData();
+          
           const presets = await db.fontPresets.toArray();
           if (presets && presets.length > 0) {
             presets.forEach((preset) => {
@@ -18242,16 +19183,33 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
           const container = document.getElementById("font-preset-container");
           container.innerHTML = ""; // 清空旧内容
 
-          // 1. 从数据库读取所有已保存的预设，并确保它是一个数组
-          const presets = (await db.fontPresets.toArray()) || [];
+          // 1. 从数据库读取所有已保存的预设，并按 slotIndex 排序
+          const allPresets = (await db.fontPresets.toArray()) || [];
+          allPresets.sort((a, b) => (a.slotIndex || 0) - (b.slotIndex || 0));
 
-          // 我们不再依赖 presets 的长度来循环，而是无条件地循环10次，创建10个卡槽。
+          // 2. 分离固定卡槽和自定义卡槽的数据
+          const fixedSlotPresets = [];
+          const customSlotPresets = [];
+          
+          allPresets.forEach(preset => {
+            if (preset.slotIndex < 10) {
+              fixedSlotPresets[preset.slotIndex] = preset;
+            } else {
+              customSlotPresets.push(preset);
+            }
+          });
+
+          // 3. 添加固定卡槽区域标题
+          const fixedTitle = document.createElement("div");
+          fixedTitle.style.cssText = "font-size: 14px; font-weight: bold; color: #888; margin: 10px 0 5px 0; padding: 5px 10px; background: rgba(0,0,0,0.1); border-radius: 5px;";
+          fixedTitle.textContent = "固定卡槽 (1-10)";
+          container.appendChild(fixedTitle);
+
+          // 4. 渲染10个固定卡槽（索引 0-9）
           for (let i = 0; i < 10; i++) {
             const slot = document.createElement("div");
             slot.className = "font-preset-slot";
-
-            // 3. 在循环内部，再判断当前索引 i 是否在已保存的 presets 数组中有对应的数据。
-            const preset = presets[i];
+            const preset = fixedSlotPresets[i];
 
             if (preset) {
               // 如果这个卡槽有数据，就渲染成“已填充”的样式
@@ -18260,7 +19218,7 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
 			                <div class="font-preset-info">名称: ${preset.name}</div>
 			                <div class="font-preset-actions">
 			                    <button class="preset-btn apply-btn" data-preset-id="${preset.id}">应用</button>
-			                    <button class="preset-btn delete-btn delete" data-preset-id="${preset.id}">删除</button>
+			                    <button class="preset-btn delete-btn clear-fixed" data-preset-id="${preset.id}" data-slot-index="${i}">清空</button>
 			                </div>
 			            `;
             } else {
@@ -18269,22 +19227,61 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
               slot.innerHTML = `
 			                <div class="font-preset-info">卡槽 ${i + 1} 为空</div>
 			                <div class="font-preset-actions">
-			                    <button class="preset-btn secondary upload-url-btn" data-slot-index="${i}">URL上传</button>
-			                    <button class="preset-btn secondary upload-local-btn" data-slot-index="${i}">本地上传</button>
+			                    <button class="preset-btn secondary upload-url-btn" data-slot-index="${i}" data-is-custom="false">URL上传</button>
+			                    <button class="preset-btn secondary upload-local-btn" data-slot-index="${i}" data-is-custom="false">本地上传</button>
 			                </div>
 			            `;
             }
-            // 4. 将创建好的卡槽（无论空的还是满的）添加到容器中
             container.appendChild(slot);
           }
 
-          // 5. 预览字体和绑定事件的逻辑保持不变
-          presets.forEach((preset) => {
+          // 5. 添加分隔线
+          const divider = document.createElement("div");
+          divider.style.cssText = "height: 1px; background: linear-gradient(to right, transparent, #888, transparent); margin: 20px 0;";
+          container.appendChild(divider);
+
+          // 6. 添加自定义卡槽区域标题
+          const customTitle = document.createElement("div");
+          customTitle.style.cssText = "font-size: 14px; font-weight: bold; color: #888; margin: 10px 0 5px 0; padding: 5px 10px; background: rgba(0,0,0,0.1); border-radius: 5px;";
+          customTitle.textContent = `自定义卡槽 (${customSlotPresets.length})`;
+          container.appendChild(customTitle);
+
+          // 7. 渲染所有自定义卡槽（索引 >= 10）
+          customSlotPresets.forEach((preset) => {
+            const slot = document.createElement("div");
+            slot.className = "font-preset-slot";
+            slot.innerHTML = `
+              <div class="font-preview-text" data-preset-id="${preset.id}">Abc 你好</div>
+              <div class="font-preset-info">名称: ${preset.name}</div>
+              <div class="font-preset-actions">
+                <button class="preset-btn apply-btn" data-preset-id="${preset.id}">应用</button>
+                <button class="preset-btn delete-btn danger" data-preset-id="${preset.id}" data-is-custom="true">删除</button>
+              </div>
+            `;
+            container.appendChild(slot);
+          });
+
+          // 8. 添加"添加新卡槽"按钮
+          const addSlotBtn = document.createElement("div");
+          addSlotBtn.className = "font-preset-slot empty add-slot-btn";
+          addSlotBtn.style.cssText = "cursor: pointer; border: 2px dashed #888; display: flex; align-items: center; justify-content: center; min-height: 100px;";
+          addSlotBtn.innerHTML = `
+            <div style="text-align: center; color: #888;">
+              <div style="font-size: 32px; margin-bottom: 5px;">+</div>
+              <div>添加新卡槽</div>
+            </div>
+          `;
+          addSlotBtn.onclick = () => addCustomFontSlot();
+          container.appendChild(addSlotBtn);
+
+          // 9. 预览所有字体
+          allPresets.forEach((preset) => {
             if (preset) {
               loadFontForPreview(preset);
             }
           });
 
+          // 10. 绑定事件监听器
           addFontPresetButtonListeners();
         }
 
@@ -18320,12 +19317,18 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
          */
         function addFontPresetButtonListeners() {
           document.querySelectorAll(".upload-url-btn").forEach((btn) => {
-            btn.onclick = () =>
-              handleUploadFontUrl(parseInt(btn.dataset.slotIndex));
+            btn.onclick = () => {
+              const slotIndex = parseInt(btn.dataset.slotIndex);
+              const isCustom = btn.dataset.isCustom === "true";
+              handleUploadFontUrl(slotIndex, isCustom);
+            };
           });
           document.querySelectorAll(".upload-local-btn").forEach((btn) => {
-            btn.onclick = () =>
-              handleUploadFontLocal(parseInt(btn.dataset.slotIndex));
+            btn.onclick = () => {
+              const slotIndex = parseInt(btn.dataset.slotIndex);
+              const isCustom = btn.dataset.isCustom === "true";
+              handleUploadFontLocal(slotIndex, isCustom);
+            };
           });
           document.querySelectorAll(".apply-btn").forEach((btn) => {
             btn.onclick = () => applyFontPreset(btn.dataset.presetId);
@@ -18336,10 +19339,68 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
         }
 
         /**
-         * 处理通过URL上传字体
-         * @param {number} slotIndex - 卡槽的索引 (0-4)
+         * 添加自定义字体卡槽
          */
-        async function handleUploadFontUrl(slotIndex) {
+        async function addCustomFontSlot() {
+          try {
+            // 1. 询问用户选择上传方式
+            const uploadMethod = await new Promise((resolve) => {
+              const overlay = document.createElement("div");
+              overlay.style.cssText = "position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;";
+              
+              const dialog = document.createElement("div");
+              dialog.style.cssText = "background: white; padding: 30px; border-radius: 10px; text-align: center; max-width: 400px;";
+              dialog.innerHTML = `
+                <h3 style="margin-top: 0; color: #333;">选择上传方式</h3>
+                <button id="custom-slot-url-btn" style="width: 100%; padding: 15px; margin: 10px 0; font-size: 16px; cursor: pointer; border: 1px solid #ddd; border-radius: 5px; background: #f5f5f5;">URL上传</button>
+                <button id="custom-slot-local-btn" style="width: 100%; padding: 15px; margin: 10px 0; font-size: 16px; cursor: pointer; border: 1px solid #ddd; border-radius: 5px; background: #f5f5f5;">本地上传</button>
+                <button id="custom-slot-cancel-btn" style="width: 100%; padding: 15px; margin: 10px 0; font-size: 16px; cursor: pointer; border: 1px solid #ddd; border-radius: 5px; background: white;">取消</button>
+              `;
+              
+              overlay.appendChild(dialog);
+              document.body.appendChild(overlay);
+              
+              document.getElementById("custom-slot-url-btn").onclick = () => {
+                document.body.removeChild(overlay);
+                resolve("url");
+              };
+              document.getElementById("custom-slot-local-btn").onclick = () => {
+                document.body.removeChild(overlay);
+                resolve("local");
+              };
+              document.getElementById("custom-slot-cancel-btn").onclick = () => {
+                document.body.removeChild(overlay);
+                resolve(null);
+              };
+            });
+            
+            if (!uploadMethod) return;
+            
+            // 2. 计算新卡槽的 slotIndex
+            const allPresets = await db.fontPresets.toArray();
+            const maxIndex = allPresets.length > 0 
+              ? Math.max(...allPresets.map(p => p.slotIndex || 0))
+              : 9;
+            const newSlotIndex = Math.max(10, maxIndex + 1);
+            
+            // 3. 根据选择的方式处理上传
+            if (uploadMethod === "url") {
+              await handleUploadFontUrl(newSlotIndex, true);
+            } else if (uploadMethod === "local") {
+              await handleUploadFontLocal(newSlotIndex, true);
+            }
+          } catch (error) {
+            console.error("添加自定义卡槽失败:", error);
+            alert("添加自定义卡槽失败: " + error.message);
+          }
+        }
+
+        /**
+         * 处理通过URL上传字体
+         * @param {number} slotIndex - 卡槽的索引
+         * @param {boolean} isCustomSlot - 是否为自定义卡槽
+         */
+        async function handleUploadFontUrl(slotIndex, isCustomSlot = false) {
           const url = await showCustomPrompt(
             "字体URL",
             "请输入字体的网络链接(.ttf, .otf等)",
@@ -18356,14 +19417,15 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             if (name !== null) alert("名字不能为空！");
             return;
           }
-          await saveFontPreset(slotIndex, name.trim(), url.trim());
+          await saveFontPreset(slotIndex, name.trim(), url.trim(), isCustomSlot);
         }
 
         /**
          * 处理通过本地文件上传字体
-         * @param {number} slotIndex - 卡槽的索引 (0-4)
+         * @param {number} slotIndex - 卡槽的索引
+         * @param {boolean} isCustomSlot - 是否为自定义卡槽
          */
-        function handleUploadFontLocal(slotIndex) {
+        function handleUploadFontLocal(slotIndex, isCustomSlot = false) {
           const input = document.getElementById("font-preset-local-upload");
           input.onchange = async (e) => {
             const file = e.target.files[0];
@@ -18382,52 +19444,83 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             // 使用FileReader将字体文件转为Base64 Data URL
             const reader = new FileReader();
             reader.onload = async (event) => {
-              await saveFontPreset(slotIndex, name.trim(), event.target.result);
+              await saveFontPreset(slotIndex, name.trim(), event.target.result, isCustomSlot);
             };
 
             reader.readAsDataURL(file);
           };
           input.click(); // 触发文件选择框
         }
-        async function saveFontPreset(slotIndex, name, url) {
+        
+        /**
+         * 保存字体预设到数据库
+         * @param {number} slotIndex - 卡槽索引
+         * @param {string} name - 字体名称
+         * @param {string} url - 字体URL或Base64数据
+         * @param {boolean} isCustomSlot - 是否为自定义卡槽
+         */
+        async function saveFontPreset(slotIndex, name, url, isCustomSlot = false) {
           try {
-            const presets = await db.fontPresets.toArray();
-            const newPreset = { id: "font_" + Date.now(), name, url };
-            presets.splice(slotIndex, 0, newPreset);
+            // 1. 检查该位置是否已有数据
+            const existingPresets = await db.fontPresets.toArray();
+            const existingPreset = existingPresets.find(p => p.slotIndex === slotIndex);
+            
+            // 2. 创建新的预设对象
+            const newPreset = {
+              id: existingPreset ? existingPreset.id : "font_" + Date.now(),
+              name,
+              url,
+              slotIndex,
+              isCustomSlot
+            };
 
-            // 将 slice(0, 5) 修改为 slice(0, 10)
-            const presetsToSave = presets.slice(0, 10);
+            // 3. 保存到数据库（覆盖或新增）
+            await db.fontPresets.put(newPreset);
 
-            await db.transaction("rw", db.fontPresets, async () => {
-              await db.fontPresets.clear();
-              await db.fontPresets.bulkPut(presetsToSave);
-            });
-
+            // 4. 刷新渲染
             await renderFontPresets();
-            alert(`字体 "${name}" 已成功保存到卡槽 ${slotIndex + 1}！`);
+            
+            const slotName = isCustomSlot ? `自定义卡槽` : `卡槽 ${slotIndex + 1}`;
+            alert(`字体 "${name}" 已成功保存到${slotName}！`);
           } catch (error) {
             console.error("保存字体预设失败:", error);
-            alert(
-              `保存字体失败，数据已自动回滚，你之前的字体数据是安全的。错误: ${error.message}`,
-            );
+            alert(`保存字体失败: ${error.message}`);
             await renderFontPresets();
           }
         }
 
         /**
-         * 删除一个字体预设
+         * 删除/清空一个字体预设
          * @param {string} presetId - 要删除的预设的ID
          */
         async function deleteFontPreset(presetId) {
           const preset = await db.fontPresets.get(presetId);
           if (!preset) return;
-          const confirmed = await showCustomConfirm(
-            "确认删除",
-            `确定要删除字体 "${preset.name}" 吗？`,
-            {
-              confirmButtonClass: "btn-danger",
-            },
-          );
+          
+          // 判断是固定卡槽还是自定义卡槽
+          const isFixed = !preset.isCustomSlot && preset.slotIndex < 10;
+          
+          let confirmed;
+          if (isFixed) {
+            // 固定卡槽：只清空内容，保留位置
+            confirmed = await showCustomConfirm(
+              "确认清空",
+              `确定要清空卡槽 ${preset.slotIndex + 1} 的字体 "${preset.name}" 吗？\n卡槽位置将保留，可以重新上传字体。`,
+              {
+                confirmButtonClass: "btn-danger",
+              },
+            );
+          } else {
+            // 自定义卡槽：完全删除
+            confirmed = await showCustomConfirm(
+              "确认删除",
+              `确定要删除这个自定义卡槽及其字体 "${preset.name}" 吗？\n此操作不可恢复。`,
+              {
+                confirmButtonClass: "btn-danger",
+              },
+            );
+          }
+          
           if (confirmed) {
             await db.fontPresets.delete(presetId);
 
@@ -20822,6 +21915,8 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             datingScenes, // <--- 在这里新增
             localUserStickerCategories,
             offlinePresetsFromDB,
+            ringtonePresets,
+            notificationSoundPresets,
           ] = await Promise.all([
             db.chats.toArray(),
             db.apiConfig.get("main"),
@@ -20838,8 +21933,12 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             db.datingScenes.toArray(), // <--- 在这里新增
             db.userStickerCategories.toArray(),
             db.offlinePresets.toArray(),
+            db.ringtonePresets.toArray(),
+            db.notificationSoundPresets.toArray(),
           ]);
           state.offlinePresets = offlinePresetsFromDB || [];
+          state.ringtonePresets = ringtonePresets || [];
+          state.notificationSoundPresets = notificationSoundPresets || [];
           state.chats = chatsArr.reduce((acc, chat) => {
             if (!chat.checkpoints) {
               chat.checkpoints = [];
@@ -22743,6 +23842,58 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             globalSocialMediaSwitch.checked = savedSocialMedia === "true";
           }
           // === 【新增结束】 ===
+
+          // --- 检查持久化存储状态 ---
+          const persistentStatusEl = document.getElementById(
+            "persistent-storage-status",
+          );
+          const requestPersistenceBtn = document.getElementById(
+            "request-persistence-btn",
+          );
+
+          if (
+            persistentStatusEl &&
+            navigator.storage &&
+            navigator.storage.persisted
+          ) {
+            navigator.storage.persisted().then((isPersisted) => {
+              if (isPersisted) {
+                persistentStatusEl.textContent = "✅ 已持久化";
+                persistentStatusEl.style.color = "green";
+                requestPersistenceBtn.style.display = "none";
+              } else {
+                persistentStatusEl.textContent =
+                  "❌ 未持久化 (浏览器可能自动清理)";
+                persistentStatusEl.style.color = "red";
+                requestPersistenceBtn.style.display = "block";
+
+                // 移除旧的监听器防止重复
+                const newBtn = requestPersistenceBtn.cloneNode(true);
+                requestPersistenceBtn.parentNode.replaceChild(
+                  newBtn,
+                  requestPersistenceBtn,
+                );
+
+                newBtn.onclick = async () => {
+                  if (navigator.storage && navigator.storage.persist) {
+                    const isPersisted = await navigator.storage.persist();
+                    if (isPersisted) {
+                      persistentStatusEl.textContent = "✅ 已持久化";
+                      persistentStatusEl.style.color = "green";
+                      newBtn.style.display = "none";
+                      alert("成功！浏览器已授权持久化存储，您的数据更安全了。");
+                    } else {
+                      alert(
+                        "授权失败。浏览器拒绝了请求，或者您处于隐私模式。\n建议手动将此网站安装为 PWA 应用。",
+                      );
+                    }
+                  }
+                };
+              }
+            });
+          } else if (persistentStatusEl) {
+            persistentStatusEl.textContent = "⚠️ 浏览器不支持";
+          }
         }
 
         /**
@@ -23092,6 +24243,7 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
           return container;
         }
 
+window.renderChatInterface = renderChatInterface;
         function renderChatInterface(chatId) {
           cleanupWaimaiTimers();
           const chat = state.chats[chatId];
@@ -23430,6 +24582,46 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             state.globalSettings.ringtoneUrl || "";
           document.getElementById("notification-sound-url-input").value =
             state.globalSettings.notificationSoundUrl || "";
+
+          // 渲染铃声和提示音预设
+          renderRingtonePresetSelector();
+          renderNotificationPresetSelector();
+
+          // 绑定试听和管理按钮事件 (防止重复绑定，使用 onclick 赋值)
+          const manageRingtoneBtn = document.getElementById(
+            "manage-ringtone-presets-btn",
+          );
+          if (manageRingtoneBtn)
+            manageRingtoneBtn.onclick = openRingtonePresetManager;
+
+          const previewRingtoneBtn = document.getElementById(
+            "preview-ringtone-btn",
+          );
+          if (previewRingtoneBtn) previewRingtoneBtn.onclick = previewRingtone;
+
+          const ringtoneSelect = document.getElementById(
+            "ringtone-preset-select",
+          );
+          if (ringtoneSelect)
+            ringtoneSelect.onchange = handleRingtonePresetSelectChange;
+
+          const manageNotificationBtn = document.getElementById(
+            "manage-notification-presets-btn",
+          );
+          if (manageNotificationBtn)
+            manageNotificationBtn.onclick = openNotificationPresetManager;
+
+          const previewNotificationBtn = document.getElementById(
+            "preview-notification-btn",
+          );
+          if (previewNotificationBtn)
+            previewNotificationBtn.onclick = previewNotificationSound;
+
+          const notificationSelect = document.getElementById(
+            "notification-preset-select",
+          );
+          if (notificationSelect)
+            notificationSelect.onchange = handleNotificationPresetSelectChange;
 
           await loadThemesToDropdown(); // 确保主题列表已加载
           const editor = document.getElementById("theme-css-editor");
@@ -23779,6 +24971,15 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
               imageEl.className = "sticker-image";
               imageEl.style.backgroundImage = `url(${sticker.url})`;
 
+              // 如果已识别，添加标记
+              if (sticker.recognizedDescription) {
+                  const badge = document.createElement("span");
+                  badge.textContent = "✨";
+                  badge.style.cssText = "position: absolute; top: 2px; right: 2px; font-size: 12px; background: rgba(255, 255, 255, 0.9); border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 5; box-shadow: 0 1px 2px rgba(0,0,0,0.1);";
+                  imageEl.style.position = "relative"; // 确保父容器有relative定位
+                  imageEl.appendChild(badge);
+              }
+
               const nameEl = document.createElement("span");
               nameEl.className = "sticker-name";
               nameEl.textContent = sticker.name;
@@ -23820,6 +25021,35 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
                   deleteBtn.className = "delete-btn";
                   deleteBtn.innerHTML = "&times;";
                   deleteBtn.style.display = "block";
+                  
+                  // 同时添加编辑按钮
+                  const editBtn = document.createElement("div");
+                  editBtn.innerHTML = "✏️";
+                  editBtn.style.cssText = "position: absolute; top: 0; right: 28px; width: 20px; height: 20px; background: rgba(255, 255, 255, 0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.2);";
+                  editBtn.onclick = (e) => {
+                      e.stopPropagation();
+                      if (window.openStickerRecognitionEditor) {
+                          window.openStickerRecognitionEditor(sticker.id);
+                      } else {
+                          alert("编辑模块未加载");
+                      }
+                      
+                      // 移除所有按钮
+                      if (deleteBtn) deleteBtn.remove();
+                      if (editBtn) editBtn.remove();
+                      imageEl.removeEventListener("mouseleave", removeDeleteBtn);
+                  };
+                  imageEl.appendChild(editBtn);
+                  
+                  // 修改 removeDeleteBtn 函数，使其同时移除两个按钮
+                  const originalRemove = removeDeleteBtn;
+                  const newRemove = () => {
+                      if (deleteBtn) deleteBtn.remove();
+                      if (editBtn) editBtn.remove();
+                      imageEl.removeEventListener("mouseleave", newRemove);
+                  };
+                  imageEl.removeEventListener("mouseleave", removeDeleteBtn); // 移除旧的
+                  imageEl.addEventListener("mouseleave", newRemove); // 添加新的
                   deleteBtn.onclick = async (e) => {
                     e.stopPropagation();
                     const confirmed = await showCustomConfirm(
@@ -23852,8 +25082,44 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             });
           }
 
-          // 每次渲染表情列表后，都更新一次分类页签栏
+        // 每次渲染表情列表后，都更新一次分类页签栏
           renderStickerCategories();
+          
+          // 更新全选按钮状态
+          if (isUserStickerSelectionMode) {
+              updateUserStickerSelectAllButtons(stickersToRender);
+          }
+        }
+        
+        // 更新用户表情包全选/取消按钮
+        function updateUserStickerSelectAllButtons(currentStickers) {
+            const selectAllBtn = document.getElementById("select-all-stickers-btn");
+            const deselectAllBtn = document.getElementById("deselect-all-stickers-btn");
+            
+            if (!selectAllBtn || !deselectAllBtn) return;
+            
+            // 绑定事件（使用 onclick 覆盖之前的绑定，避免重复）
+            selectAllBtn.onclick = () => {
+                currentStickers.forEach(s => selectedUserStickers.add(s.id));
+                renderStickerPanel(); // 重新渲染以更新选中状态
+            };
+            
+            deselectAllBtn.onclick = () => {
+                selectedUserStickers.clear();
+                renderStickerPanel();
+            };
+            
+            // 关键：同时更新“删除”和“移动”按钮的状态
+            const deleteBtn = document.getElementById("delete-selected-user-stickers-btn");
+            if(deleteBtn) {
+                 deleteBtn.textContent = `删除已选 (${selectedUserStickers.size})`;
+                 deleteBtn.disabled = selectedUserStickers.size === 0;
+            }
+            
+            const moveBtn = document.getElementById("move-selected-stickers-btn");
+            if(moveBtn) {
+                 moveBtn.disabled = selectedUserStickers.size === 0;
+            }
         }
 
         /**
@@ -25038,6 +26304,7 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
           }
         }
 
+window.appendMessage = appendMessage;
         function appendMessage(msg, chat, isInitialLoad = false) {
           const messagesContainer = document.getElementById("chat-messages");
           const messageEl = createMessageElement(msg, chat);
@@ -25275,6 +26542,20 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             const messagesForOfflineMode = chat.history.slice(
               -chat.settings.maxMemory,
             );
+            
+            // 【新增】表情包识别预处理
+            const messagesForApi = await Promise.all(messagesForOfflineMode.map(async (msg) => {
+                let content = msg.content;
+                if (msg.role === "user" && chat.settings.enableStickerRecognition) {
+                    if (window.processMessageContentForAI) {
+                        content = await window.processMessageContentForAI(content);
+                    }
+                }
+                return {
+                    role: msg.role,
+                    content: content
+                };
+            }));
 
             // UI 状态更新
             const chatHeaderTitle =
@@ -25304,7 +26585,7 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
 
               if (isGemini) {
                 requestBody = {
-                  contents: messagesForOfflineMode.map((item) => ({
+                  contents: messagesForApi.map((item) => ({
                     role: item.role === "assistant" ? "model" : "user",
                     parts: [{ text: item.content }],
                   })),
@@ -25318,7 +26599,7 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
                   model: model,
                   messages: [
                     { role: "system", content: offlineSystemPrompt },
-                    ...messagesForOfflineMode,
+                    ...messagesForApi,
                   ],
                   temperature: parseFloat(state.apiConfig.temperature) || 0.8,
                   stream: false,
@@ -26797,6 +28078,14 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
                   coupleAvatarContext = `\n# 关于情侣头像的重要信息\n- 你和用户正在使用情侣头像。\n- 这对情侣头像是这样的：${chat.settings.coupleAvatarDescription}。`;
                 } else {
                   coupleAvatarContext = `\n# 关于情侣头像的重要信息\n- 你和用户正在使用情侣头像。`;
+                }
+
+                // 尝试查找当前头像是否有识别结果
+                if (typeof window.findCurrentCoupleAvatarPair === "function") {
+                    const currentPair = window.findCurrentCoupleAvatarPair(chat);
+                    if (currentPair && currentPair.recognizedDescription) {
+                        coupleAvatarContext += `\n- AI识别特征：${currentPair.recognizedDescription}`;
+                    }
                 }
               }
               let petContext = "";
@@ -37508,11 +38797,48 @@ ${innerVoicePromptPart}
           const targetElement = isComplexElement ? textSpan : element;
           const currentValue = targetElement.textContent;
 
-          const newValue = await showCustomPrompt(
-            "修改文字",
-            "请输入新的内容：",
-            currentValue === placeholder ? "" : currentValue,
-          );
+          // 先弹出选择框
+          const choice = await showChoiceModal("修改文字", [
+            { text: "修改内容", value: "edit" },
+            { text: "重置为默认", value: "reset" },
+          ]);
+
+          let newValue = null;
+
+          if (choice === "edit") {
+            // 原来的修改逻辑
+            newValue = await showCustomPrompt(
+              "修改文字",
+              "请输入新的内容：",
+              currentValue === placeholder ? "" : currentValue,
+            );
+          } else if (choice === "reset") {
+            // 定义每个元素的默认文本
+            const defaultTexts = {
+              "profile-username": "你的昵称",
+              "profile-sub-username": "@your_id",
+              "profile-bio": "点击这里编辑你的个性签名",
+              "profile-location": "点击编辑地点",
+              "widget-bubble-1": "点击编辑文字",
+              "widget-subtext-1": "点击编辑文字",
+              "widget-bubble-2": "点击编辑文字",
+              "widget-subtext-2": "点击编辑文字",
+              "second-page-bubble": "点击编辑文字",
+              "flat-capsule-bubble": "可编辑",
+              "circular-bubble": "文字",
+              "music-text-line": "点击编辑歌曲名",
+              "widget-month-display": "12",
+              "new-widget-text-1": "可编辑文字",
+              "new-widget-text-2": "可编辑文字",
+              "new-widget-text-3": "可编辑文字"
+            };
+            
+            newValue = defaultTexts[elementId];
+            if (!newValue) {
+              alert("该元素没有定义默认文本！");
+              return;
+            }
+          }
 
           if (newValue !== null) {
             const trimmedValue = newValue.trim();
@@ -37823,6 +39149,7 @@ ${innerVoicePromptPart}
           const choice = await showChoiceModal("修改图片", [
             { text: "从本地上传", value: "local" },
             { text: "使用网络URL", value: "url" },
+            { text: "重置为默认", value: "reset" },
           ]);
 
           let newValue = null;
@@ -37836,6 +39163,24 @@ ${innerVoicePromptPart}
               element.src,
               "url",
             );
+          } else if (choice === "reset") {
+            // 定义每个元素的默认图片
+            const defaultImages = {
+              "profile-banner-img": "https://i.postimg.cc/k495F4W5/profile-banner.jpg",
+              "profile-avatar-img": "https://i.postimg.cc/qRqpK5kP/anime-avatar.jpg",
+              "widget-image-1": "https://i.postimg.cc/qRqpK5kP/anime-avatar.jpg",
+              "widget-image-2": "https://i.postimg.cc/k495F4W5/profile-banner.jpg",
+              "widget-image-3": "https://i.postimg.cc/qRqpK5kP/anime-avatar.jpg",
+              "music-rect-img": "https://i.postimg.cc/k495F4W5/profile-banner.jpg",
+              "music-record-img": "https://i.postimg.cc/qRqpK5kP/anime-avatar.jpg",
+              "new-widget-avatar": "https://i.postimg.cc/qRqpK5kP/anime-avatar.jpg"
+            };
+            
+            newValue = defaultImages[elementId];
+            if (!newValue) {
+              alert("该元素没有定义默认图片！");
+              return;
+            }
           }
 
           if (newValue && newValue.trim()) {
@@ -40231,6 +41576,347 @@ ${innerVoicePromptPart}
             console.error("创建提示音Audio对象时出错:", error);
           }
         }
+
+        // ==================== 铃声和提示音预设管理 ====================
+
+        // --- 来电铃声预设 ---
+
+        /**
+         * 渲染来电铃声预设下拉框
+         */
+        function renderRingtonePresetSelector() {
+          const selectEl = document.getElementById("ringtone-preset-select");
+          if (!selectEl) return;
+
+          selectEl.innerHTML = '<option value="">-- 自定义 --</option>';
+
+          if (state.ringtonePresets) {
+            state.ringtonePresets.forEach((preset) => {
+              const option = document.createElement("option");
+              option.value = preset.id;
+              option.textContent = preset.name;
+              selectEl.appendChild(option);
+            });
+          }
+
+          // 检查当前URL是否匹配某个预设
+          const currentUrl = state.globalSettings.ringtoneUrl;
+          const matchingPreset = state.ringtonePresets
+            ? state.ringtonePresets.find((p) => p.url === currentUrl)
+            : null;
+
+          selectEl.value = matchingPreset ? matchingPreset.id : "";
+        }
+
+        /**
+         * 切换来电铃声预设
+         */
+        function handleRingtonePresetSelectChange() {
+          const selectEl = document.getElementById("ringtone-preset-select");
+          const urlInput = document.getElementById("ringtone-url-input");
+          const selectedId = parseInt(selectEl.value);
+
+          if (selectedId && state.ringtonePresets) {
+            const selectedPreset = state.ringtonePresets.find(
+              (p) => p.id === selectedId
+            );
+            if (selectedPreset) {
+              urlInput.value = selectedPreset.url;
+            }
+          }
+        }
+
+        /**
+         * 打开来电铃声预设管理
+         */
+        async function openRingtonePresetManager() {
+          const selectEl = document.getElementById("ringtone-preset-select");
+          const selectedId = parseInt(selectEl.value);
+          const selectedPreset = state.ringtonePresets
+            ? state.ringtonePresets.find((p) => p.id === selectedId)
+            : null;
+
+          const modal = document.getElementById("preset-actions-modal");
+          const footer = modal.querySelector(".custom-modal-footer");
+
+          footer.innerHTML = `
+            <button id="preset-action-save-new-ringtone">保存当前为新预设</button>
+            <button id="preset-action-update-ringtone" ${!selectedPreset ? "disabled" : ""}>更新当前预设</button>
+            <button id="preset-action-delete-ringtone" class="btn-danger" ${!selectedPreset ? "disabled" : ""}>删除预设</button>
+            <button id="preset-action-cancel" style="margin-top: 8px; border-radius: 8px; background-color: #f0f0f0;">取消</button>
+          `;
+
+          document.getElementById("preset-action-save-new-ringtone")
+            .addEventListener("click", saveRingtonePreset);
+          if (selectedPreset) {
+            document.getElementById("preset-action-update-ringtone")
+              .addEventListener("click", () => updateRingtonePreset(selectedId));
+            document.getElementById("preset-action-delete-ringtone")
+              .addEventListener("click", () => deleteRingtonePreset(selectedId));
+          }
+          document.getElementById("preset-action-cancel")
+            .addEventListener("click", () => modal.classList.remove("visible"));
+
+          modal.classList.add("visible");
+        }
+
+        /**
+         * 保存来电铃声预设
+         */
+        async function saveRingtonePreset() {
+          const url = document.getElementById("ringtone-url-input").value.trim();
+          if (!url) {
+            alert("请先输入来电铃声URL！");
+            return;
+          }
+
+          const name = await showCustomPrompt("保存来电铃声预设", "请输入预设名称：");
+          if (name && name.trim()) {
+            const newPreset = { name: name.trim(), url };
+            const newId = await db.ringtonePresets.add(newPreset);
+
+            if (!state.ringtonePresets) state.ringtonePresets = [];
+            state.ringtonePresets.push({ id: newId, ...newPreset });
+
+            renderRingtonePresetSelector();
+            document.getElementById("ringtone-preset-select").value = newId;
+            document.getElementById("preset-actions-modal").classList.remove("visible");
+            await showCustomAlert("成功", `来电铃声预设 "${name.trim()}" 已保存！`);
+          }
+        }
+
+        /**
+         * 更新来电铃声预设
+         */
+        async function updateRingtonePreset(presetId) {
+          const url = document.getElementById("ringtone-url-input").value.trim();
+          if (!url) {
+            alert("URL不能为空！");
+            return;
+          }
+
+          const preset = state.ringtonePresets.find((p) => p.id === presetId);
+          if (preset) {
+            preset.url = url;
+            await db.ringtonePresets.put(preset);
+            document.getElementById("preset-actions-modal").classList.remove("visible");
+            await showCustomAlert("成功", `预设 "${preset.name}" 已更新！`);
+          }
+        }
+
+        /**
+         * 删除来电铃声预设
+         */
+        async function deleteRingtonePreset(presetId) {
+          const preset = state.ringtonePresets.find((p) => p.id === presetId);
+          if (preset) {
+            const confirmed = await showCustomConfirm(
+              "确认删除",
+              `确定要删除来电铃声预设 "${preset.name}" 吗？`,
+              { confirmButtonClass: "btn-danger" }
+            );
+            if (confirmed) {
+              await db.ringtonePresets.delete(presetId);
+              state.ringtonePresets = state.ringtonePresets.filter(
+                (p) => p.id !== presetId
+              );
+              renderRingtonePresetSelector();
+              document.getElementById("preset-actions-modal").classList.remove("visible");
+              await showCustomAlert("成功", "预设已删除。");
+            }
+          }
+        }
+
+        // --- 消息提示音预设 ---
+
+        /**
+         * 渲染消息提示音预设下拉框
+         */
+        function renderNotificationPresetSelector() {
+          const selectEl = document.getElementById("notification-preset-select");
+          if (!selectEl) return;
+
+          selectEl.innerHTML = '<option value="">-- 自定义 --</option>';
+
+          if (state.notificationSoundPresets) {
+            state.notificationSoundPresets.forEach((preset) => {
+              const option = document.createElement("option");
+              option.value = preset.id;
+              option.textContent = preset.name;
+              selectEl.appendChild(option);
+            });
+          }
+
+          const currentUrl = state.globalSettings.notificationSoundUrl;
+          const matchingPreset = state.notificationSoundPresets
+            ? state.notificationSoundPresets.find((p) => p.url === currentUrl)
+            : null;
+
+          selectEl.value = matchingPreset ? matchingPreset.id : "";
+        }
+
+        /**
+         * 切换消息提示音预设
+         */
+        function handleNotificationPresetSelectChange() {
+          const selectEl = document.getElementById("notification-preset-select");
+          const urlInput = document.getElementById("notification-sound-url-input");
+          const selectedId = parseInt(selectEl.value);
+
+          if (selectedId && state.notificationSoundPresets) {
+            const selectedPreset = state.notificationSoundPresets.find(
+              (p) => p.id === selectedId
+            );
+            if (selectedPreset) {
+              urlInput.value = selectedPreset.url;
+            }
+          }
+        }
+
+        /**
+         * 打开消息提示音预设管理
+         */
+        async function openNotificationPresetManager() {
+          const selectEl = document.getElementById("notification-preset-select");
+          const selectedId = parseInt(selectEl.value);
+          const selectedPreset = state.notificationSoundPresets
+            ? state.notificationSoundPresets.find((p) => p.id === selectedId)
+            : null;
+
+          const modal = document.getElementById("preset-actions-modal");
+          const footer = modal.querySelector(".custom-modal-footer");
+
+          footer.innerHTML = `
+            <button id="preset-action-save-new-notification">保存当前为新预设</button>
+            <button id="preset-action-update-notification" ${!selectedPreset ? "disabled" : ""}>更新当前预设</button>
+            <button id="preset-action-delete-notification" class="btn-danger" ${!selectedPreset ? "disabled" : ""}>删除预设</button>
+            <button id="preset-action-cancel" style="margin-top: 8px; border-radius: 8px; background-color: #f0f0f0;">取消</button>
+          `;
+
+          document.getElementById("preset-action-save-new-notification")
+            .addEventListener("click", saveNotificationPreset);
+          if (selectedPreset) {
+            document.getElementById("preset-action-update-notification")
+              .addEventListener("click", () => updateNotificationPreset(selectedId));
+            document.getElementById("preset-action-delete-notification")
+              .addEventListener("click", () => deleteNotificationPreset(selectedId));
+          }
+          document.getElementById("preset-action-cancel")
+            .addEventListener("click", () => modal.classList.remove("visible"));
+
+          modal.classList.add("visible");
+        }
+
+        /**
+         * 保存消息提示音预设
+         */
+        async function saveNotificationPreset() {
+          const url = document.getElementById("notification-sound-url-input").value.trim();
+          if (!url) {
+            alert("请先输入消息提示音URL！");
+            return;
+          }
+
+          const name = await showCustomPrompt("保存消息提示音预设", "请输入预设名称：");
+          if (name && name.trim()) {
+            const newPreset = { name: name.trim(), url };
+            const newId = await db.notificationSoundPresets.add(newPreset);
+
+            if (!state.notificationSoundPresets) state.notificationSoundPresets = [];
+            state.notificationSoundPresets.push({ id: newId, ...newPreset });
+
+            renderNotificationPresetSelector();
+            document.getElementById("notification-preset-select").value = newId;
+            document.getElementById("preset-actions-modal").classList.remove("visible");
+            await showCustomAlert("成功", `消息提示音预设 "${name.trim()}" 已保存！`);
+          }
+        }
+
+        /**
+         * 更新消息提示音预设
+         */
+        async function updateNotificationPreset(presetId) {
+          const url = document.getElementById("notification-sound-url-input").value.trim();
+          if (!url) {
+            alert("URL不能为空！");
+            return;
+          }
+
+          const preset = state.notificationSoundPresets.find((p) => p.id === presetId);
+          if (preset) {
+            preset.url = url;
+            await db.notificationSoundPresets.put(preset);
+            document.getElementById("preset-actions-modal").classList.remove("visible");
+            await showCustomAlert("成功", `预设 "${preset.name}" 已更新！`);
+          }
+        }
+
+        /**
+         * 删除消息提示音预设
+         */
+        async function deleteNotificationPreset(presetId) {
+          const preset = state.notificationSoundPresets.find((p) => p.id === presetId);
+          if (preset) {
+            const confirmed = await showCustomConfirm(
+              "确认删除",
+              `确定要删除消息提示音预设 "${preset.name}" 吗？`,
+              { confirmButtonClass: "btn-danger" }
+            );
+            if (confirmed) {
+              await db.notificationSoundPresets.delete(presetId);
+              state.notificationSoundPresets = state.notificationSoundPresets.filter(
+                (p) => p.id !== presetId
+              );
+              renderNotificationPresetSelector();
+              document.getElementById("preset-actions-modal").classList.remove("visible");
+              await showCustomAlert("成功", "预设已删除。");
+            }
+          }
+        }
+
+        // --- 试听功能 ---
+
+        /**
+         * 预览铃声
+         */
+        function previewRingtone() {
+          const url = document.getElementById("ringtone-url-input").value.trim();
+          if (!url) {
+            alert("请先输入铃声URL");
+            return;
+          }
+          
+          const audio = new Audio(url);
+          audio.play().catch(error => {
+            console.error("播放失败:", error);
+            alert("播放失败，请检查URL是否正确");
+          });
+          
+          // 3秒后自动停止
+          setTimeout(() => audio.pause(), 3000);
+        }
+
+        /**
+         * 预览提示音
+         */
+        function previewNotificationSound() {
+          const url = document.getElementById("notification-sound-url-input").value.trim();
+          if (!url) {
+            alert("请先输入提示音URL");
+            return;
+          }
+          
+          const audio = new Audio(url);
+          audio.play().catch(error => {
+            console.error("播放失败:", error);
+            alert("播放失败，请检查URL是否正确");
+          });
+        }
+
+        // --- 初始化绑定 ---
+        // 注意：由于我们在HTML中直接写了script，且这些元素是静态的，DOMContentLoaded 应该能捕获到。
+        // 如果脚本在 body 底部，也可以直接执行。为了保险起见，使用 DOMContentLoaded。
+        /* (已移除无效的 DOMContentLoaded 绑定，改在 showSettingsModal 中直接绑定) */
 
         // 音频上下文解锁函数
         function unlockAudioContext() {
@@ -44836,6 +46522,40 @@ ${innerVoicePromptPart}
             }
             grid.appendChild(item);
           });
+          
+          // 更新角色表情包全选/取消按钮
+          if (isCharStickerSelectionMode) {
+              updateCharStickerSelectAllButtons(type, stickers);
+          }
+        }
+        
+        // 更新角色表情包全选/取消按钮
+        function updateCharStickerSelectAllButtons(type, currentStickers) {
+            const selectAllBtn = document.getElementById("select-all-char-stickers-btn");
+            const deselectAllBtn = document.getElementById("deselect-all-char-stickers-btn");
+            
+            if (!selectAllBtn || !deselectAllBtn) return;
+            
+            // 绑定事件
+            selectAllBtn.onclick = () => {
+                currentStickers.forEach(s => {
+                    // 角色表情包使用 URL 作为唯一标识符
+                    selectedCharStickers.add(s.url);
+                });
+                renderCharStickers(type); // 重新渲染以更新选中状态
+            };
+            
+            deselectAllBtn.onclick = () => {
+                selectedCharStickers.clear();
+                renderCharStickers(type);
+            };
+            
+            // 同时更新删除按钮上的数字
+             const deleteBtn = document.getElementById("delete-selected-char-stickers-btn");
+             if(deleteBtn) {
+                 deleteBtn.textContent = `删除已选 (${selectedCharStickers.size})`;
+                 deleteBtn.disabled = selectedCharStickers.size === 0;
+             }
         }
 
         /**
@@ -45319,6 +47039,207 @@ ${innerVoicePromptPart}
             interpretation: interpretationText,
             timestamp: reading.timestamp,
           });
+        }
+
+        // --- 梅花易数/中式占卜功能核心 ---
+        const CHINESE_TRIGRAMS = [
+          { id: 1, name: "乾", nature: "天", quality: "健" },
+          { id: 2, name: "兑", nature: "泽", quality: "悦" },
+          { id: 3, name: "离", nature: "火", quality: "丽" },
+          { id: 4, name: "震", nature: "雷", quality: "动" },
+          { id: 5, name: "巽", nature: "风", quality: "入" },
+          { id: 6, name: "坎", nature: "水", quality: "陷" },
+          { id: 7, name: "艮", nature: "山", quality: "止" },
+          { id: 8, name: "坤", nature: "地", quality: "顺" },
+        ];
+        let activeChineseReading = null;
+
+        function openChineseModal() {
+          document
+            .getElementById("chinese-divination-modal")
+            .classList.add("visible");
+          document.getElementById("chinese-setup-view").style.display = "block";
+          document.getElementById("chinese-result-view").style.display = "none";
+          document.getElementById("chinese-question-input").value = "";
+          document.getElementById("bagua-animation-container").innerHTML = "☯";
+        }
+
+        function handleChineseDivination() {
+          const question = document
+            .getElementById("chinese-question-input")
+            .value.trim();
+          if (!question) {
+            alert("请先在心中默念问题，并输入在这里。");
+            return;
+          }
+
+          // 模拟起卦动画
+          const animContainer = document.getElementById(
+            "bagua-animation-container",
+          );
+          let frames = ["☰", "☱", "☲", "☳", "☴", "☵", "☶", "☷"];
+          let i = 0;
+          const interval = setInterval(() => {
+            animContainer.innerHTML = frames[i % frames.length];
+            i++;
+          }, 100);
+
+          setTimeout(() => {
+            clearInterval(interval);
+            // 真正起卦 (随机生成)
+            const upperIndex = Math.floor(Math.random() * 8);
+            const lowerIndex = Math.floor(Math.random() * 8);
+            const movingLine = Math.floor(Math.random() * 6) + 1;
+
+            const upperTrigram = CHINESE_TRIGRAMS[upperIndex];
+            const lowerTrigram = CHINESE_TRIGRAMS[lowerIndex];
+
+            activeChineseReading = {
+              question: question,
+              upper: upperTrigram,
+              lower: lowerTrigram,
+              movingLine: movingLine,
+              timestamp: Date.now(),
+            };
+
+            displayChineseResults(activeChineseReading);
+          }, 1500);
+        }
+
+        function displayChineseResults(reading) {
+          const displayEl = document.getElementById("chinese-result-display");
+          displayEl.innerHTML = "";
+
+          const questionEl = document.createElement("div");
+          questionEl.className = "tarot-result-question"; // 复用样式
+          questionEl.textContent = `您的问题：“${reading.question}”`;
+          displayEl.appendChild(questionEl);
+
+          const hexagramContainer = document.createElement("div");
+          hexagramContainer.style.textAlign = "center";
+          hexagramContainer.style.marginTop = "20px";
+
+          hexagramContainer.innerHTML = `
+                <div style="font-size: 24px; font-weight: bold; margin-bottom: 10px;">
+                    上${reading.upper.name} 下${reading.lower.name}
+                </div>
+                <div style="font-size: 18px; color: var(--text-secondary);">
+                    上卦：${reading.upper.nature} (${reading.upper.quality}) <br/>
+                    下卦：${reading.lower.nature} (${reading.lower.quality})
+                </div>
+                <div style="margin-top: 20px; font-size: 100px; line-height: 1;">
+                    ☯
+                </div>
+                <div style="margin-top: 10px; color: var(--text-secondary); font-size: 14px;">
+                    (变爻在第 ${reading.movingLine} 爻)
+                </div>
+            `;
+          displayEl.appendChild(hexagramContainer);
+
+          document.getElementById("chinese-setup-view").style.display = "none";
+          document.getElementById("chinese-result-view").style.display = "flex";
+        }
+
+        async function sendChineseReadingToChat() {
+          if (!activeChineseReading || !state.activeChatId) return;
+
+          const chat = state.chats[state.activeChatId];
+          const { proxyUrl, apiKey, model } = state.apiConfig;
+
+          if (!proxyUrl || !apiKey || !model) {
+            alert("请先配置API！");
+            return;
+          }
+
+          document
+            .getElementById("chinese-divination-modal")
+            .classList.remove("visible");
+          await showCustomAlert("请稍候...", "大师正在推演卦象...");
+
+          try {
+            const reading = activeChineseReading;
+            const prompt = `
+# 角色
+你是一位精通梅花易数、六爻预测和周易哲学的国学大师。
+
+# 任务
+为用户解读刚刚起出的卦象。
+
+# 卦象信息
+- **用户问题**: "${reading.question}"
+- **上卦**: ${reading.upper.name} (${reading.upper.nature})
+- **下卦**: ${reading.lower.name} (${reading.lower.nature})
+- **变爻**: 第${reading.movingLine}爻
+
+# 输出要求 (Markdown)
+1. **卦象分析**: 简要解释这个卦象的构成（${reading.upper.name}上${reading.lower.name}下）是什么卦（如果不确定卦名，可根据上下卦性质推演），以及其基本含义。
+2. **直断**: 针对用户的问题，给出直接的吉凶或趋势判断。
+3. **大师指引**: 结合卦象的哲学含义，给出具体的人生建议或处事智慧。
+
+请用古朴典雅但通俗易懂的语言风格，体现中式哲学的深邃。
+                 `;
+
+            let isGemini = proxyUrl === GEMINI_API_URL;
+            let messagesForApi = [{ role: "user", content: prompt }];
+
+            let geminiConfig = toGeminiRequestData(
+              model,
+              apiKey,
+              prompt,
+              messagesForApi,
+              isGemini,
+            );
+
+            const response = isGemini
+              ? await fetch(geminiConfig.url, geminiConfig.data)
+              : await fetch(`${proxyUrl}/v1/chat/completions`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${apiKey}`,
+                  },
+                  body: JSON.stringify({
+                    model: model,
+                    messages: messagesForApi,
+                    temperature: parseFloat(state.apiConfig.temperature) || 0.8,
+                  }),
+                });
+
+            if (!response.ok) {
+              throw new Error(`API请求失败: ${await response.text()}`);
+            }
+
+            const data = await response.json();
+            const interpretation = (
+              isGemini
+                ? data.candidates[0].content.parts[0].text
+                : data.choices[0].message.content
+            ).trim();
+
+            const systemMsg = {
+              role: "system",
+              type: "pat_message", // 灰色气泡
+              content: `☯ **梅花易数解读** ☯\n\n**问题**：“${reading.question}”\n**卦象**：上${reading.upper.name}下${reading.lower.name}\n\n${interpretation}`,
+              timestamp: Date.now(),
+            };
+            chat.history.push(systemMsg);
+            appendMessage(systemMsg, chat);
+
+            const hiddenMsg = {
+              role: "system",
+              content: `[系统指令：用户刚刚进行了一次中式占卜(梅花易数)，结果是：“${interpretation}”。请你以角色的身份，用符合人设的语气（如果是古风角色则更佳）和用户讨论这个卦象结果。]`,
+              timestamp: Date.now() + 1,
+              isHidden: true,
+            };
+            chat.history.push(hiddenMsg);
+
+            await db.chats.put(chat);
+            renderChatList();
+            activeChineseReading = null;
+          } catch (e) {
+            console.error(e);
+            alert("解读失败：" + e.message);
+          }
         }
 
         // 打开历史记录界面
@@ -55040,15 +56961,29 @@ ${innerVoicePromptPart}
             .addEventListener("click", () => bulkAddCharStickers("exclusive"));
           document
             .getElementById("upload-exclusive-sticker-btn")
-            .addEventListener("click", () =>
-              uploadCharStickersLocal("exclusive"),
-            );
+            .addEventListener("click", () => {
+              if (typeof openStickerImportMenu === "function") {
+                // 传入当前聊天的 ID
+                openStickerImportMenu({ 
+                    type: "char_exclusive", 
+                    chatId: state.activeChatId 
+                });
+              } else {
+                uploadCharStickersLocal("exclusive");
+              }
+            });
           document
             .getElementById("add-common-sticker-btn")
             .addEventListener("click", () => bulkAddCharStickers("common"));
           document
             .getElementById("upload-common-sticker-btn")
-            .addEventListener("click", () => uploadCharStickersLocal("common"));
+            .addEventListener("click", () => {
+              if (typeof openStickerImportMenu === "function") {
+                openStickerImportMenu({ type: "char_common" });
+              } else {
+                uploadCharStickersLocal("common");
+              }
+            });
 
           // 心声历史记录删除功能事件绑定
           document
@@ -57039,6 +58974,12 @@ ${innerVoicePromptPart}
               if (realCameraSwitch) {
                 realCameraSwitch.checked = chat.settings.useRealCamera || false;
               }
+
+              // 加载表情包识别开关状态
+              const stickerRecCheckbox = document.getElementById("enable-sticker-recognition-checkbox");
+              if(stickerRecCheckbox) {
+                 stickerRecCheckbox.checked = chat.settings.enableStickerRecognition || false;
+              }
               // --- 线下模式UI渲染 ---
               const offlineModeSettings = chat.settings.offlineMode || {
                 enabled: false,
@@ -57880,6 +59821,11 @@ ${innerVoicePromptPart}
                 chat.settings.isCoupleAvatar = document.getElementById(
                   "couple-avatar-toggle",
                 ).checked;
+                
+                const stickerRecCheckbox = document.getElementById(
+                  "enable-sticker-recognition-checkbox",
+                );
+                chat.settings.enableStickerRecognition = stickerRecCheckbox ? stickerRecCheckbox.checked : false;
                 chat.settings.coupleAvatarDescription = document
                   .getElementById("couple-avatar-description")
                   .value.trim();
@@ -58256,9 +60202,13 @@ ${innerVoicePromptPart}
 
           document
             .getElementById("upload-sticker-btn")
-            .addEventListener("click", () =>
-              document.getElementById("sticker-upload-input").click(),
-            );
+            .addEventListener("click", () => {
+              if (typeof openStickerImportMenu === "function") {
+                openStickerImportMenu();
+              } else {
+                document.getElementById("sticker-upload-input").click();
+              }
+            });
 
           document
             .getElementById("sticker-upload-input")
@@ -58338,6 +60288,35 @@ ${innerVoicePromptPart}
             );
           document
             .getElementById("image-upload-input")
+            .addEventListener("change", async (event) => {
+              const file = event.target.files[0];
+              if (!file || !state.activeChatId) return;
+              const reader = new FileReader();
+              reader.onload = async (e) => {
+                const base64Url = e.target.result;
+                const chat = state.chats[state.activeChatId];
+                const msg = {
+                  role: "user",
+                  content: [
+                    { type: "image_url", image_url: { url: base64Url } },
+                  ],
+                  timestamp: Date.now(),
+                };
+                chat.history.push(msg);
+                await db.chats.put(chat);
+                appendMessage(msg, chat);
+                renderChatList();
+              };
+              reader.readAsDataURL(file);
+              event.target.value = null;
+            });
+          document
+            .getElementById("camera-capture-btn")
+            .addEventListener("click", () =>
+              document.getElementById("camera-capture-input").click(),
+            );
+          document
+            .getElementById("camera-capture-input")
             .addEventListener("change", async (event) => {
               const file = event.target.files[0];
               if (!file || !state.activeChatId) return;
@@ -62255,6 +64234,32 @@ ${innerVoicePromptPart}
               }
             });
 
+          // --- 梅花易数/中式占卜功能事件绑定 ---
+          document
+            .getElementById("open-chinese-divination-btn")
+            .addEventListener("click", openChineseModal);
+          document
+            .getElementById("close-chinese-modal-btn")
+            .addEventListener("click", () => {
+              document
+                .getElementById("chinese-divination-modal")
+                .classList.remove("visible");
+            });
+          document
+            .getElementById("start-chinese-divination-btn")
+            .addEventListener("click", handleChineseDivination);
+          document
+            .getElementById("back-to-chinese-setup-btn")
+            .addEventListener("click", () => {
+              document.getElementById("chinese-result-view").style.display =
+                "none";
+              document.getElementById("chinese-setup-view").style.display =
+                "block";
+            });
+          document
+            .getElementById("send-chinese-result-btn")
+            .addEventListener("click", sendChineseReadingToChat);
+
           // 1. 初始化时创建默认小组
           await initializeDefaultGroups();
           /* === 修复后的主屏幕滑动逻辑（支持PC鼠标拖拽） === */
@@ -64004,6 +66009,7 @@ ${innerVoicePromptPart}
               .classList.add("visible");
           }
 
+window.renderCoupleAvatarLibraryList = renderCoupleAvatarLibraryList;
           // 核心函数：渲染列表
           function renderCoupleAvatarLibraryList() {
             const listEl = document.getElementById(
@@ -64026,7 +66032,18 @@ ${innerVoicePromptPart}
             background: #fff; padding: 10px; border-radius: 12px; 
             display: flex; flex-direction: column; gap: 10px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+            cursor: pointer;
         `;
+              // 新增：点击卡片编辑
+              item.onclick = (e) => {
+                  if (e.target.tagName === 'BUTTON') return; // 如果点击的是按钮，不触发编辑
+                  if (typeof window.openCoupleAvatarEditor === 'function') {
+                      window.openCoupleAvatarEditor(pair.id);
+                  }
+              };
+              item.onmouseover = () => item.style.transform = "scale(1.02)";
+              item.onmouseout = () => item.style.transform = "scale(1)";
 
               item.innerHTML = `
             <div style="display:flex; justify-content:center; gap: 15px; align-items:center;">
@@ -64043,6 +66060,7 @@ ${innerVoicePromptPart}
             <div style="font-size:13px; color:#333; background:#f9f9f9; padding:8px; border-radius:6px;">
                 <strong>描述：</strong>${pair.description}
             </div>
+            ${pair.recognizedDescription ? '<div style="font-size:10px; color:#2196F3; background:#e3f2fd; padding:4px 8px; border-radius:4px; margin-top:-5px;">✨ AI已识别特征</div>' : ''}
             <div style="display:flex; gap:10px; justify-content:flex-end;">
                 <button class="moe-btn-mini apply-pair-btn" style="background:#4caf50; color:white;">应用</button>
                 <button class="moe-btn-mini delete-pair-btn" style="background:#ff3b30; color:white;">删除</button>

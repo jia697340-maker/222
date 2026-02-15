@@ -1,71 +1,149 @@
-/*
- * EPhone Service Worker
- * 核心功能：接管安卓系统的通知弹窗点击事件，并在安装后立即激活。
- */
+// Service Worker - 网络优先策略 + 自动更新检测
+// 确保仓库更新时始终获取最新版本
 
-// 1. 安装事件：强制跳过等待，立即让新版本生效
-self.addEventListener('install', event => {
-  // console.log('[Service Worker] Installing...');
-  self.skipWaiting();
-});
+const CACHE_NAME = 'phone-ui-v' + Date.now(); // 使用时间戳作为缓存版本
+const ASSETS_TO_CACHE = [
+  './',
+  './index.html',
+  './style.css',
+  './script.js',
+  './manifest.json'
+];
 
-// 2. 激活事件：立即接管所有页面
-self.addEventListener('activate', event => {
-  // console.log('[Service Worker] Activating...');
-  event.waitUntil(self.clients.claim());
-});
-
-// 3. 核心：处理通知的点击事件
-self.addEventListener('notificationclick', event => {
-  // 点击通知后，第一件事是关闭通知栏
-  event.notification.close();
-
-  // 获取通知携带的数据（如果有的话，比如 chatId）
-  // const chatId = event.notification.data ? event.notification.data.chatId : null;
-
-  // 尝试寻找已打开的浏览器窗口并聚焦
+// 安装 Service Worker
+self.addEventListener('install', (event) => {
+  console.log('[SW] 安装中...版本:', CACHE_NAME);
   event.waitUntil(
-    self.clients
-      .matchAll({
-        type: 'window',
-        includeUncontrolled: true, // 包含所有受控和未受控的窗口
-      })
-      .then(clientList => {
-        // 策略 A: 如果已经有打开的窗口，直接聚焦第一个
-        for (let i = 0; i < clientList.length; i++) {
-          const client = clientList[i];
-          // 如果窗口可见或不可见，且具有聚焦能力
-          if ('focus' in client) {
-            return client.focus();
-          }
-        }
-
-        // 策略 B: 如果没有打开的窗口，打开主页
-        if (self.clients.openWindow) {
-          return self.clients.openWindow('/');
-        }
-      }),
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('[SW] 缓存文件');
+      return cache.addAll(ASSETS_TO_CACHE);
+    }).then(() => {
+      return self.skipWaiting(); // 立即激活新的 Service Worker
+    })
   );
 });
 
-// 4. (可选) 监听来自服务器的推送（如果你以后接了 Web Push 服务器）
-self.addEventListener('push', event => {
-  if (!event.data) return;
+// 激活 Service Worker
+self.addEventListener('activate', (event) => {
+  console.log('[SW] 激活中...');
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('[SW] 删除旧缓存:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => {
+      return self.clients.claim(); // 立即控制所有页面
+    })
+  );
+});
 
-  let data = {};
-  try {
-    data = event.data.json();
-  } catch (e) {
-    data = { title: '新消息', body: event.data.text() };
+// 网络优先策略 - 始终尝试从网络获取最新内容
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  
+  // 添加时间戳参数，强制绕过浏览器缓存
+  const shouldBypassCache = url.pathname.endsWith('.html') || 
+                           url.pathname.endsWith('.css') || 
+                           url.pathname.endsWith('.js');
+  
+  if (shouldBypassCache) {
+    // 为关键资源添加时间戳，确保获取最新版本
+    const timestamp = Date.now();
+    const fetchUrl = event.request.url + (event.request.url.includes('?') ? '&' : '?') + '_t=' + timestamp;
+    
+    event.respondWith(
+      fetch(fetchUrl, {
+        cache: 'no-store', // 不使用浏览器缓存
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      })
+        .then((response) => {
+          // 如果网络请求成功，更新缓存
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // 网络请求失败时，尝试从缓存获取
+          return caches.match(event.request).then((cachedResponse) => {
+            if (cachedResponse) {
+              console.log('[SW] 从缓存返回:', event.request.url);
+              return cachedResponse;
+            }
+            return new Response('离线状态，内容不可用', {
+              status: 503,
+              statusText: 'Service Unavailable',
+              headers: new Headers({
+                'Content-Type': 'text/plain; charset=utf-8'
+              })
+            });
+          });
+        })
+    );
+  } else {
+    // 其他资源使用普通网络优先策略
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request).then((cachedResponse) => {
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            return new Response('离线状态，内容不可用', {
+              status: 503,
+              statusText: 'Service Unavailable'
+            });
+          });
+        })
+    );
   }
+});
 
-  const title = data.title || 'EPhone';
-  const options = {
-    body: data.body,
-    icon: 'https://i.postimg.cc/Kj8JnRcp/267611-CC01-F8-A3-B4910-A2-C2-FFDE479-DC.jpg',
-    badge: 'https://i.postimg.cc/Kj8JnRcp/267611-CC01-F8-A3-B4910-A2-C2-FFDE479-DC.jpg',
-    data: data.data || {},
-  };
+// 定期检查更新（每10分钟）
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  if (event.data && event.data.type === 'CHECK_UPDATE') {
+    // 清除所有缓存，强制重新获取
+    event.waitUntil(
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => caches.delete(cacheName))
+        );
+      }).then(() => {
+        return self.registration.update();
+      })
+    );
+  }
+});
 
-  event.waitUntil(self.registration.showNotification(title, options));
+// 后台同步 - 定期检查更新
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'update-check') {
+    event.waitUntil(
+      self.registration.update().then(() => {
+        console.log('[SW] 后台更新检查完成');
+      })
+    );
+  }
 });

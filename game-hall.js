@@ -2399,7 +2399,7 @@ ${gameLogText}
       modalConfirmBtn.onclick = () => {
         const selectedRadio = document.querySelector('input[name="role_selection"]:checked');
         if (selectedRadio) {
-          modal.classList.remove('visible');
+          hideCustomModal();
           resolve(parseInt(selectedRadio.value));
         } else {
           alert('请选择一个角色！');
@@ -2407,8 +2407,15 @@ ${gameLogText}
       };
 
       modalCancelBtn.onclick = () => {
-        modal.classList.remove('visible');
+        hideCustomModal();
         resolve(null);
+      };
+
+      modal.onclick = (e) => {
+        if (e.target === modal) {
+          hideCustomModal();
+          resolve(null);
+        }
       };
     });
   }
@@ -5539,7 +5546,8 @@ ${eventPrompt}
   function hideCustomModal() {
     modalOverlay.classList.remove('visible');
     modalConfirmBtn.classList.remove('btn-danger');
-    if (modalResolve) modalResolve(null);
+    modalOverlay.onclick = null; // 清理遮罩层点击事件
+    // if (modalResolve) modalResolve(null); // 修复：移除副作用，不再resolve promise
   }
   // ▼▼▼ 用这块【已修复】的代码，完整替换你旧的 migrateDefaultLudoQuestions 函数 ▼▼▼
   /**

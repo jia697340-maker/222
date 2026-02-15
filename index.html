@@ -17845,7 +17845,8 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
         function hideCustomModal() {
           modalOverlay.classList.remove("visible");
           modalConfirmBtn.classList.remove("btn-danger");
-          if (modalResolve) modalResolve(null);
+          modalOverlay.onclick = null; // 清理遮罩层点击事件
+          // if (modalResolve) modalResolve(null); // 修复：移除副作用，不再resolve promise
         }
 
         window.showCustomConfirm = function (title, message, options = {}) {
@@ -17859,11 +17860,20 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
               modalConfirmBtn.classList.add(options.confirmButtonClass);
             modalConfirmBtn.onclick = () => {
               resolve(true);
+              modalResolve = null;
               hideCustomModal();
             };
             modalCancelBtn.onclick = () => {
               resolve(false);
+              modalResolve = null;
               hideCustomModal();
+            };
+            modalOverlay.onclick = (e) => {
+              if (e.target === modalOverlay) {
+                resolve(false);
+                modalResolve = null;
+                hideCustomModal();
+              }
             };
             showCustomModal();
           });
@@ -17894,7 +17904,18 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
               modalConfirmBtn.textContent = "确定";
               document.getElementById("custom-modal-overlay").style.zIndex = ""; // 恢复层级
               resolve(true);
+              modalResolve = null;
               hideCustomModal();
+            };
+            modalOverlay.onclick = (e) => {
+              if (e.target === modalOverlay) {
+                modalCancelBtn.style.display = "block";
+                modalConfirmBtn.textContent = "确定";
+                document.getElementById("custom-modal-overlay").style.zIndex = ""; // 恢复层级
+                resolve(true);
+                modalResolve = null;
+                hideCustomModal();
+              }
             };
             showCustomModal();
           });
@@ -17961,11 +17982,20 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
 
             modalConfirmBtn.onclick = () => {
               resolve(input.value);
+              modalResolve = null;
               hideCustomModal();
             };
             modalCancelBtn.onclick = () => {
               resolve(null);
+              modalResolve = null;
               hideCustomModal();
+            };
+            modalOverlay.onclick = (e) => {
+              if (e.target === modalOverlay) {
+                resolve(null);
+                modalResolve = null;
+                hideCustomModal();
+              }
             };
             document.getElementById("custom-modal-overlay").style.zIndex =
               "10005";

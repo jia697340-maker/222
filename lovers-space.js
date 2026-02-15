@@ -3126,13 +3126,14 @@ async function triggerPomodoroBreakResponse(userText) {
 
   // 2.1 世界书
   let worldBookContext = "";
-  if (
-    chat.settings.linkedWorldBookIds &&
-    chat.settings.linkedWorldBookIds.length > 0
-  ) {
-    const linkedContents = chat.settings.linkedWorldBookIds
-      .map((id) => {
-        const book = state.worldBooks.find((b) => b.id === id);
+  const linkedIds = chat.settings.linkedWorldBookIds || [];
+  const booksToInclude = state.worldBooks.filter(book => 
+    linkedIds.includes(book.id) || book.isGlobal
+  );
+
+  if (booksToInclude.length > 0) {
+    const linkedContents = booksToInclude
+      .map((book) => {
         return book && book.content
           ? `\n\n## 世界书条目: ${book.name}\n${book.content}`
           : "";

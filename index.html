@@ -1087,6 +1087,23 @@
             />
           </div>
 
+          <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
+            <label class="toggle-switch-label" for="world-book-is-global-checkbox" style="margin-bottom: 0;">是否是全局世界书</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="world-book-is-global-checkbox">
+              <span class="slider round"></span>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label for="world-book-position-select">注入位置</label>
+            <select id="world-book-position-select">
+              <option value="front">提示词最前面 (Front)</option>
+              <option value="middle" selected>提示词中间 (Middle)</option>
+              <option value="back">提示词最后面 (Back)</option>
+            </select>
+          </div>
+
           <div class="form-group">
             <label for="world-book-category-select">分类</label>
             <select id="world-book-category-select">
@@ -1094,12 +1111,14 @@
             </select>
           </div>
 
-          <div class="form-group" style="height: 100%">
-            <label for="world-book-content-input">内容</label>
-            <textarea
-              id="world-book-content-input"
-              placeholder="在此处输入详细的世界观设定..."
-            ></textarea>
+          <div class="form-group" style="height: calc(100% - 150px); display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+              <label>内容条目</label>
+              <button id="add-world-book-entry-btn" class="moe-btn-mini" style="margin-left: auto;">+ 添加条目</button>
+            </div>
+            <div id="world-book-entries-container" style="flex: 1; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px;">
+              <!-- 条目列表将在这里动态生成 -->
+            </div>
           </div>
         </div>
       </div>
@@ -18443,6 +18462,193 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
         }
 
         /**
+         * 批量导入角色卡 - 显示选择界面
+         * @param {File[]} files - 文件数组
+         */
+        async function handleBatchCharacterImport(files) {
+          if (!files || files.length === 0) return;
+
+          const parsedCharacters = [];
+          
+          // 解析所有文件
+          for (const file of files) {
+            try {
+              let characterData;
+              let avatarBase64;
+
+              if (file.name.toLowerCase().endsWith(".png")) {
+                const result = await parseCharPng(file);
+                characterData = result.characterData;
+                avatarBase64 = result.avatarBase64;
+              } else if (file.name.toLowerCase().endsWith(".json")) {
+                characterData = await parseCharJson(file);
+                avatarBase64 = defaultAvatar;
+              } else {
+                continue; // 跳过不支持的格式
+              }
+
+              if (characterData) {
+                const charData = characterData.data || characterData;
+                parsedCharacters.push({
+                  fileName: file.name,
+                  name: charData.name || "未命名角色",
+                  description: charData.description || "暂无描述",
+                  avatar: avatarBase64,
+                  characterData: characterData,
+                  avatarBase64: avatarBase64
+                });
+              }
+            } catch (error) {
+              console.error(`解析文件 ${file.name} 失败:`, error);
+            }
+          }
+
+          if (parsedCharacters.length === 0) {
+            alert("没有成功解析任何角色卡文件");
+            return;
+          }
+
+          // 显示选择界面
+          await showBatchCharacterSelectModal(parsedCharacters);
+        }
+
+        /**
+         * 显示批量角色卡选择弹窗
+         * @param {Array} characters - 解析好的角色数组
+         */
+        async function showBatchCharacterSelectModal(characters) {
+          const modal = document.getElementById("character-batch-select-modal");
+          const listContainer = document.getElementById("character-batch-list");
+          const totalSpan = document.getElementById("char-batch-total");
+          const selectedSpan = document.getElementById("char-batch-selected");
+          const selectAllBtn = document.getElementById("char-batch-select-all");
+          const cancelBtn = document.getElementById("char-batch-cancel");
+          const confirmBtn = document.getElementById("char-batch-confirm");
+
+          // 更新统计
+          totalSpan.textContent = characters.length;
+          
+          // 渲染角色列表
+          listContainer.innerHTML = "";
+          characters.forEach((char, index) => {
+            const charItem = document.createElement("div");
+            charItem.style.cssText = `
+              display: flex; 
+              align-items: center; 
+              padding: 12px; 
+              border: 2px solid #eee; 
+              border-radius: 12px; 
+              margin-bottom: 10px; 
+              cursor: pointer; 
+              transition: all 0.2s;
+              background: var(--bg-primary, #fff);
+            `;
+            charItem.dataset.index = index;
+            charItem.dataset.selected = "false";
+            
+            charItem.innerHTML = `
+              <div style="width: 60px; height: 60px; min-width: 60px; border-radius: 10px; overflow: hidden; margin-right: 15px; border: 2px solid #eee;">
+                <img src="${char.avatar}" style="width: 100%; height: 100%; object-fit: cover;" />
+              </div>
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 600; font-size: 16px; margin-bottom: 4px; color: var(--text-primary, #333); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${char.name}</div>
+                <div style="font-size: 12px; color: var(--text-secondary, #999); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${char.fileName}</div>
+                <div style="font-size: 13px; color: var(--text-secondary, #666); margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${char.description}</div>
+              </div>
+              <div style="margin-left: 15px; width: 24px; height: 24px; border: 2px solid #007aff; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                <div style="width: 14px; height: 14px; background: #007aff; border-radius: 50%; opacity: 0; transition: opacity 0.2s;"></div>
+              </div>
+            `;
+
+            // 点击切换选中状态
+            charItem.addEventListener("click", () => {
+              const isSelected = charItem.dataset.selected === "true";
+              charItem.dataset.selected = isSelected ? "false" : "true";
+              
+              const checkbox = charItem.querySelector("div:last-child > div");
+              if (isSelected) {
+                charItem.style.border = "2px solid #eee";
+                charItem.style.background = "var(--bg-primary, #fff)";
+                checkbox.style.opacity = "0";
+              } else {
+                charItem.style.border = "2px solid #007aff";
+                charItem.style.background = "#f0f8ff";
+                checkbox.style.opacity = "1";
+              }
+              
+              updateSelectedCount();
+            });
+
+            listContainer.appendChild(charItem);
+          });
+
+          // 更新选中数量
+          const updateSelectedCount = () => {
+            const selected = listContainer.querySelectorAll('[data-selected="true"]').length;
+            selectedSpan.textContent = selected;
+            selectAllBtn.textContent = selected === characters.length ? "取消全选" : "全选";
+          };
+
+          // 全选/取消全选
+          selectAllBtn.onclick = () => {
+            const allSelected = listContainer.querySelectorAll('[data-selected="true"]').length === characters.length;
+            listContainer.querySelectorAll('[data-index]').forEach(item => {
+              item.dataset.selected = allSelected ? "false" : "true";
+              const checkbox = item.querySelector("div:last-child > div");
+              if (allSelected) {
+                item.style.border = "2px solid #eee";
+                item.style.background = "var(--bg-primary, #fff)";
+                checkbox.style.opacity = "0";
+              } else {
+                item.style.border = "2px solid #007aff";
+                item.style.background = "#f0f8ff";
+                checkbox.style.opacity = "1";
+              }
+            });
+            updateSelectedCount();
+          };
+
+          // 取消
+          cancelBtn.onclick = () => {
+            modal.classList.remove("visible");
+          };
+
+          // 确认导入
+          confirmBtn.onclick = async () => {
+            const selectedItems = listContainer.querySelectorAll('[data-selected="true"]');
+            if (selectedItems.length === 0) {
+              alert("请至少选择一个角色");
+              return;
+            }
+
+            modal.classList.remove("visible");
+
+            // 显示进度提示
+            const progressMsg = `正在导入 ${selectedItems.length} 个角色...`;
+            console.log(progressMsg);
+
+            let successCount = 0;
+            for (const item of selectedItems) {
+              const index = parseInt(item.dataset.index);
+              const char = characters[index];
+              try {
+                await createCharacterFromData(char.characterData, char.avatarBase64);
+                successCount++;
+              } catch (error) {
+                console.error(`导入角色 ${char.name} 失败:`, error);
+              }
+            }
+
+            renderChatList();
+            alert(`成功导入 ${successCount} 个角色！`);
+          };
+
+          // 显示弹窗
+          modal.classList.add("visible");
+          updateSelectedCount();
+        }
+
+        /**
          * 解析SillyTavern的PNG角色卡，通过字节级操作彻底解决中文乱码问题。
          * @param {File} file - PNG文件
          * @returns {Promise<{characterData: object, avatarBase64: string}>}
@@ -18661,12 +18867,20 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             },
           };
 
-          await db.chats.put(newChat);
-          state.chats[newChatId] = newChat;
+          // 【修改】先不保存chat，等世界书导入并关联后再保存
+          // await db.chats.put(newChat);
+          // state.chats[newChatId] = newChat;
 
           // 重构世界书查找逻辑
           console.log("开始检测世界书数据...");
           let worldBookFound = false;
+          let importedBookIds = []; // 收集所有导入的世界书条目ID
+
+          // 辅助函数：根据分类ID获取所有条目ID (用于兼容 parseAndSaveWorldBooks 等无法修改返回值的函数)
+          async function getBookIdsByCategoryId(catId) {
+             const books = await db.worldBooks.where("categoryId").equals(catId).toArray();
+             return books.map(b => b.id);
+          }
 
           // 策略一：【最高优先级】查找提供的 character_book 标准格式
           if (
@@ -18684,7 +18898,13 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             await saveWorldBookEntriesFromArray(
               charData.character_book.entries,
               newCategoryId,
+              `${characterName}的世界书`
             );
+            
+            // 获取刚导入的ID
+            const ids = await getBookIdsByCategoryId(newCategoryId);
+            importedBookIds.push(...ids);
+            
             worldBookFound = true;
           }
 
@@ -18702,7 +18922,13 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             await saveWorldBookEntriesFromArray(
               charData.world_entries,
               newCategoryId,
+              `${characterName}的世界书`
             );
+            
+            // 获取刚导入的ID
+            const ids = await getBookIdsByCategoryId(newCategoryId);
+            importedBookIds.push(...ids);
+
             worldBookFound = true;
           }
 
@@ -18716,6 +18942,11 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             const newCategory = { name: characterName };
             const newCategoryId = await db.worldBookCategories.add(newCategory);
             await parseAndSaveWorldBooks(data.world, newCategoryId);
+
+            // 获取刚导入的ID
+            const ids = await getBookIdsByCategoryId(newCategoryId);
+            importedBookIds.push(...ids);
+
             worldBookFound = true;
           }
 
@@ -18729,12 +18960,27 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             const newCategory = { name: characterName };
             const newCategoryId = await db.worldBookCategories.add(newCategory);
             await parseAndSaveWorldBooks(charData.world_info, newCategoryId);
+            
+            // 获取刚导入的ID
+            const ids = await getBookIdsByCategoryId(newCategoryId);
+            importedBookIds.push(...ids);
+
             worldBookFound = true;
           }
 
           if (!worldBookFound) {
             console.log("诊断：在此角色卡中未找到任何可识别的世界书字段。");
+          } else {
+             // 【核心修改】如果有导入世界书，将它们关联到新角色
+             if (importedBookIds.length > 0) {
+                 console.log(`自动关联 ${importedBookIds.length} 个世界书条目到角色 ${characterName}`);
+                 newChat.settings.linkedWorldBookIds = importedBookIds;
+             }
           }
+
+          // 【修改】最后保存角色数据
+          await db.chats.put(newChat);
+          state.chats[newChatId] = newChat;
 
           // 步骤 4: 刷新UI (不变)
           await renderChatList();
@@ -18748,44 +18994,57 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
          * 从SillyTavern的 world_entries 或 character_book.entries 数组直接创建世界书
          * @param {Array<object>} entriesArray - 包含世界书条目的数组
          * @param {number} categoryId - 这些世界书所属的分类ID
+         * @param {string} bookName - [可选] 世界书的名称，默认为"导入的世界书"
          */
-        async function saveWorldBookEntriesFromArray(entriesArray, categoryId) {
-          const newBooks = [];
+        async function saveWorldBookEntriesFromArray(
+          entriesArray,
+          categoryId,
+          bookName = "导入的世界书"
+        ) {
+          const newEntries = [];
 
           for (const entry of entriesArray) {
-            // 优先使用 comment 字段作为标题，如果它存在且不为空。
-            // 否则，再尝试使用 keys 数组。
-            // 如果都没有，就给一个默认名字。
-            const entryName =
-              entry.comment && entry.comment.trim()
-                ? entry.comment.trim()
-                : entry.keys && entry.keys.length > 0
-                  ? entry.keys.join(", ")
-                  : "未命名条目";
-
-            // 检查条目是否有效 (有名字、有内容，并且是启用的)
-            // (typeof entry.enabled === 'undefined' || entry.enabled) 是为了兼容没有 enabled 字段的卡片
-            if (
-              entryName !== "未命名条目" &&
-              entry.content &&
-              (typeof entry.enabled === "undefined" || entry.enabled)
-            ) {
-              newBooks.push({
-                id: "wb_" + Date.now() + Math.random(),
-                name: entryName, // 使用我们智能获取到的名字
-                content: entry.content,
-                categoryId: categoryId,
-              });
+            // 构造注释信息，保留 keys 和 comment
+            let commentPrefix = "";
+            if (entry.keys && entry.keys.length > 0) {
+              commentPrefix += `// 关键词: ${entry.keys.join(", ")}\n`;
             }
+            if (entry.comment) {
+              commentPrefix += `// 备注: ${entry.comment}\n`;
+            }
+
+            const finalContent = commentPrefix + (entry.content || "");
+            
+            // 只要有内容或者启用了（兼容空内容占位），就添加
+            // 注意：不再过滤 enabled === false 的条目，而是将其 enabled 设为 false 保存
+            newEntries.push({
+              id: "entry_" + Date.now() + Math.random().toString(36).substr(2, 9),
+              content: finalContent,
+              enabled: entry.enabled !== false, // 默认为 true
+            });
           }
 
-          if (newBooks.length > 0) {
-            await db.worldBooks.bulkAdd(newBooks);
+          if (newEntries.length > 0) {
+            // 创建一个新的世界书对象，包含所有条目
+            const newBook = {
+              id: "wb_" + Date.now(),
+              name: bookName,
+              categoryId: categoryId,
+              entries: newEntries,
+              // content 字段用于兼容旧版逻辑，这里预先生成好拼接的内容
+              content: newEntries
+                .filter(e => e.enabled)
+                .map(e => e.content)
+                .join("\n\n")
+            };
+
+            await db.worldBooks.add(newBook);
+            
             // 确保 state.worldBooks 也被更新，以便UI能立即显示
             const allBooks = await db.worldBooks.toArray();
             state.worldBooks = allBooks;
             console.log(
-              `成功导入 ${newBooks.length} 个世界书条目到分类ID: ${categoryId}`,
+              `成功导入世界书 "${bookName}" (包含 ${newEntries.length} 个条目) 到分类ID: ${categoryId}`,
             );
           }
         }
@@ -23282,9 +23541,8 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             const item = document.createElement("div");
             item.className = "list-item";
             item.dataset.bookId = book.id;
-            item.innerHTML = `<div class="item-title">${book.name}</div><div class="item-content">${(
-              book.content || "暂无内容..."
-            ).substring(0, 50)}</div>`;
+            const contentPreview = String(book.content || "暂无内容...").substring(0, 50);
+            item.innerHTML = `<div class="item-title">${book.name}</div><div class="item-content">${contentPreview}</div>`;
             item.addEventListener("click", () => openWorldBookEditor(book.id));
             addLongPressListener(item, async () => {
               const confirmed = await showCustomConfirm(
@@ -23307,6 +23565,91 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
         }
         window.renderWorldBookScreenProxy = renderWorldBookScreen;
 
+        function renderWorldBookEntry(entry) {
+          const container = document.getElementById("world-book-entries-container");
+          const entryDiv = document.createElement("div");
+          entryDiv.className = "world-book-entry-item";
+          entryDiv.dataset.id = entry.id;
+          entryDiv.style.marginBottom = "15px";
+          entryDiv.style.padding = "10px";
+          entryDiv.style.border = "1px solid var(--border-color)";
+          entryDiv.style.borderRadius = "8px";
+          entryDiv.style.backgroundColor = "var(--bg-card)";
+
+          // Header: Switch + Delete
+          const header = document.createElement("div");
+          header.style.display = "flex";
+          header.style.justifyContent = "space-between";
+          header.style.alignItems = "center";
+          header.style.marginBottom = "5px";
+
+          // Toggle Switch
+          const toggleLabel = document.createElement("label");
+          toggleLabel.className = "toggle-switch";
+          toggleLabel.style.transform = "scale(0.8)";
+          toggleLabel.style.transformOrigin = "left center";
+          
+          const toggleInput = document.createElement("input");
+          toggleInput.type = "checkbox";
+          toggleInput.checked = entry.enabled !== false; // Default to true
+          toggleInput.className = "entry-enabled-switch";
+          
+          const sliderSpan = document.createElement("span");
+          sliderSpan.className = "slider";
+          
+          toggleLabel.appendChild(toggleInput);
+          toggleLabel.appendChild(sliderSpan);
+
+          const switchText = document.createElement("span");
+          switchText.textContent = toggleInput.checked ? "已启用" : "已禁用";
+          switchText.style.fontSize = "12px";
+          switchText.style.color = toggleInput.checked ? "var(--accent-color)" : "var(--text-secondary)";
+          switchText.style.marginLeft = "5px";
+
+          toggleInput.addEventListener("change", () => {
+             switchText.textContent = toggleInput.checked ? "已启用" : "已禁用";
+             switchText.style.color = toggleInput.checked ? "var(--accent-color)" : "var(--text-secondary)";
+          });
+
+          const leftGroup = document.createElement("div");
+          leftGroup.style.display = "flex";
+          leftGroup.style.alignItems = "center";
+          leftGroup.appendChild(toggleLabel);
+          leftGroup.appendChild(switchText);
+
+          // Delete Button
+          const deleteBtn = document.createElement("span");
+          deleteBtn.innerHTML = "&times;";
+          deleteBtn.style.cursor = "pointer";
+          deleteBtn.style.fontSize = "20px";
+          deleteBtn.style.color = "var(--text-secondary)";
+          deleteBtn.onclick = () => {
+            if (confirm("确定要删除此条目吗？")) {
+              entryDiv.remove();
+            }
+          };
+
+          header.appendChild(leftGroup);
+          header.appendChild(deleteBtn);
+
+          // Content Textarea
+          const textarea = document.createElement("textarea");
+          textarea.className = "entry-content-input";
+          textarea.style.width = "100%";
+          textarea.style.minHeight = "80px";
+          textarea.style.marginTop = "5px";
+          textarea.style.padding = "8px";
+          textarea.style.borderRadius = "4px";
+          textarea.style.border = "1px solid var(--border-color)";
+          textarea.style.resize = "vertical";
+          textarea.placeholder = "在此处输入条目内容...";
+          textarea.value = entry.content || "";
+
+          entryDiv.appendChild(header);
+          entryDiv.appendChild(textarea);
+          container.appendChild(entryDiv);
+        }
+
         async function openWorldBookEditor(bookId) {
           editingWorldBookId = bookId;
           const [book, categories] = await Promise.all([
@@ -23318,8 +23661,30 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
           document.getElementById("world-book-editor-title").textContent =
             book.name;
           document.getElementById("world-book-name-input").value = book.name;
-          document.getElementById("world-book-content-input").value =
-            book.content;
+          document.getElementById("world-book-is-global-checkbox").checked = book.isGlobal || false;
+          document.getElementById("world-book-position-select").value = book.position || "middle";
+          
+          // Clear and populate entries
+          const container = document.getElementById("world-book-entries-container");
+          container.innerHTML = "";
+
+          if (book.entries && Array.isArray(book.entries) && book.entries.length > 0) {
+            book.entries.forEach(entry => renderWorldBookEntry(entry));
+          } else if (book.content) {
+            // Legacy: Create one entry from content
+            renderWorldBookEntry({
+              id: Date.now().toString(),
+              content: book.content,
+              enabled: true
+            });
+          } else {
+            // Empty book: Add one empty entry
+            renderWorldBookEntry({
+              id: Date.now().toString(),
+              content: "",
+              enabled: true
+            });
+          }
 
           // 填充分类下拉菜单
           const selectEl = document.getElementById(
@@ -24765,24 +25130,36 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
 			`;
           }
           // 将世界书读取提到这里，确保线下模式也能生效
-          let worldBookContext = "";
-          if (
-            chat.settings.linkedWorldBookIds &&
-            chat.settings.linkedWorldBookIds.length > 0
-          ) {
-            const linkedContents = chat.settings.linkedWorldBookIds
-              .map((id) => {
-                const book = state.worldBooks.find((b) => b.id === id);
-                // 这里使用了 stripHtmlAndCode 清理函数，确保纯文本
-                return book && book.content
-                  ? `\n\n## 世界书条目: ${book.name}\n${stripHtmlAndCode(book.content)}`
-                  : "";
-              })
-              .filter(Boolean)
-              .join("");
-            if (linkedContents) {
-              worldBookContext = `\n\n# 核心世界观设定 (必须严格遵守以下所有设定)\n${linkedContents}\n`;
-            }
+          let wbFront = "", wbMiddle = "", wbBack = "";
+          
+          // 获取绑定的世界书ID列表
+          const linkedIds = chat.settings.linkedWorldBookIds || [];
+          
+          // 找出所有需要包含的世界书：绑定的 OR 全局的
+          const booksToInclude = state.worldBooks.filter(book => 
+            linkedIds.includes(book.id) || book.isGlobal
+          );
+
+          if (booksToInclude.length > 0) {
+            // Helper to format content
+            const formatBook = (book) => book && book.content 
+                ? `\n\n## 世界书条目: ${book.name}\n${stripHtmlAndCode(book.content)}` 
+                : "";
+
+            const frontContent = booksToInclude
+                .filter(b => b.position === "front")
+                .map(formatBook).filter(Boolean).join("");
+            if (frontContent) wbFront = `\n\n# 核心世界观设定 (前置)\n${frontContent}\n`;
+
+            const middleContent = booksToInclude
+                .filter(b => !b.position || b.position === "middle")
+                .map(formatBook).filter(Boolean).join("");
+            if (middleContent) wbMiddle = `\n\n# 核心世界观设定 (中置)\n${middleContent}\n`;
+
+            const backContent = booksToInclude
+                .filter(b => b.position === "back")
+                .map(formatBook).filter(Boolean).join("");
+            if (backContent) wbBack = `\n\n# 核心世界观设定 (后置)\n${backContent}\n`;
           }
           // --- 线下模式核心拦截逻辑 ---
           if (
@@ -24815,6 +25192,7 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             }
 
             const offlineSystemPrompt = `
+            ${wbFront}
             # 核心任务：线下场景角色扮演
 
             你现在【就是】角色“${chat.name}”，正在和用户进行一次【线下约会】。
@@ -24822,11 +25200,12 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             # 你的角色设定
             ${chat.settings.aiPersona}
             ${summaryContext}
-            ${worldBookContext}
+            ${wbMiddle}
 
             # 当前情景
             ${finalPrompt}
             ${finalStyle}
+            ${wbBack}
             
             # 你的输出要求 (最高指令)
             1.  **【格式铁律】**: 你的回复【必须】是一个**单一且完整**的JSON对象。
@@ -25760,6 +26139,8 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
               timeContext += "\n- **对话状态**: 这是你们的第一次对话。";
             }
 
+            // [Modified] World Book logic moved to start of triggerAiResponse and split into wbFront/wbMiddle/wbBack
+            /*
             let worldBookContent = "";
             if (
               chat.settings.linkedWorldBookIds &&
@@ -25781,6 +26162,7 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
                 worldBookContent = `\n\n# 核心世界观设定 (必须严格遵守以下所有设定)，里面可能会包含HTML小剧场，在捕获到关键词后输出\n${linkedContents}\n`;
               }
             }
+            */
             let musicContext = "";
             const countdownContext = await getCountdownContext(chatId); // <--- 把chatId传进去
             const streakContext = await getStreakContext(chat);
@@ -26118,7 +26500,7 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
 			`;
               }
               // updated by lrq 251027
-              systemPrompt = `
+              systemPrompt = `${wbFront}
 			# 角色
 			你是一个群聊AI，负责扮演【除了用户以外】的所有角色。
 			# 【对话节奏铁律 (至关重要！)】
@@ -26136,6 +26518,7 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
 			5.  **角色扮演**: 严格遵守下方“群成员列表及人设”中的每一个角色的设定。
 			# 群成员列表及人设 (name字段是你要使用的【本名】)
 			${chat.members.map((m) => `- **${m.originalName}**: (群昵称为: ${m.groupNickname}) 人设: ${m.persona}`).join("\n")}
+            ${wbMiddle}
 			6.  **禁止出戏**: 绝不能透露你是AI、模型，或提及“扮演”、“生成”等词语。并且不能一直要求和用户见面，这是线上聊天，决不允许出现或者发展线下剧情！！
 			7.  **情景感知**: 注意当前时间是 ${currentTime}。
 			8.  **红包互动**:
@@ -26210,7 +26593,7 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
 			${summaryContext}
 			${announcementContext}
 			${redPacketContext}
-			${worldBookContent}
+			${wbBack}
 			${musicContext}
 			${countdownContext} 
 			${sharedContext}
@@ -26518,13 +26901,15 @@ ${libraryList}
                 console.error("加载饿了么菜单失败:", error);
                 elemeContext += "【注意：饿了么菜单加载失败。】";
               }
-              systemPrompt = `### **【第一部分：角色核心设定】**
+              systemPrompt = `${wbFront}
+### **【第一部分：角色核心设定】**
 
 			你现在将扮演一个名为“**${chat.name}**”的角色。
 
 			**1. 角色基本设定:**
 			- **核心人设**: ${chat.settings.aiPersona}
 			- **总结**:${summaryContext}
+            ${wbMiddle}
 			- **情侣头像**: ${coupleAvatarContext}
       -情侣头像库：${coupleAvatarLibraryContext}
 			- **世界观/NPC**: ${npcContext}
@@ -26581,7 +26966,7 @@ ${innerVoicePromptPart}
 
 			**1. 角色一致性**: 你的所有言行举止都必须严格遵循你的角色设定。
 
-			**2. 对话节奏**: 模拟真人聊天习惯，鼓励一次性生成**多条短消息**（每次根据人设至少回复5-9条）。
+			**2. 对话节奏**: 模拟真人聊天习惯，鼓励一次性生成**多条短消息**（每次根据人设至少回复1-9条）。
 
 			**3. 情景限定**:
 			   - 你们的互动**仅限于线上聊天软件**，严禁发展为线下见面。
@@ -26752,7 +27137,7 @@ ${innerVoicePromptPart}
 			${weiboContextForActiveChat}
 
 			- **世界观设定集**:
-			${worldBookContent}
+			${wbBack}
 			${linkedMemoryContext}
 			${elemeContext}
         ${auroraContext}
@@ -32527,15 +32912,18 @@ ${innerVoicePromptPart}
           const countdownContext = await getCountdownContext();
 
           let worldBookContext = "";
-          if (
-            chat.settings.linkedWorldBookIds &&
-            chat.settings.linkedWorldBookIds.length > 0
-          ) {
-            const linkedContents = chat.settings.linkedWorldBookIds
-              .map((bookId) => {
-                const worldBook = state.worldBooks.find(
-                  (wb) => wb.id === bookId,
-                );
+          
+          // 获取绑定的世界书ID列表
+          const linkedIds = chat.settings.linkedWorldBookIds || [];
+          
+          // 找出所有需要包含的世界书：绑定的 OR 全局的
+          const booksToInclude = state.worldBooks.filter(book => 
+            linkedIds.includes(book.id) || book.isGlobal
+          );
+
+          if (booksToInclude.length > 0) {
+            const linkedContents = booksToInclude
+              .map((worldBook) => {
                 return worldBook && worldBook.content
                   ? `\n\n## 世界书: ${worldBook.name}\n${worldBook.content}`
                   : "";
@@ -40946,15 +41334,16 @@ ${innerVoicePromptPart}
             }
 
             let worldBookContext = "";
-            if (
-              chat.settings.linkedWorldBookIds &&
-              chat.settings.linkedWorldBookIds.length > 0
-            ) {
+            const linkedIds = chat.settings.linkedWorldBookIds || [];
+            const booksToInclude = state.worldBooks.filter(book => 
+              linkedIds.includes(book.id) || book.isGlobal
+            );
+
+            if (booksToInclude.length > 0) {
               worldBookContext =
                 "--- 世界观设定 (必须严格遵守) ---\n" +
-                chat.settings.linkedWorldBookIds
-                  .map((id) => {
-                    const book = state.worldBooks.find((b) => b.id === id);
+                booksToInclude
+                  .map((book) => {
                     return book ? `[${book.name}]: ${book.content}` : "";
                   })
                   .join("\n\n");
@@ -41366,15 +41755,16 @@ ${innerVoicePromptPart}
               linkedMemoryContext,
             );
             let worldBookContext = "";
-            if (
-              chat.settings.linkedWorldBookIds &&
-              chat.settings.linkedWorldBookIds.length > 0
-            ) {
+            const linkedIds = chat.settings.linkedWorldBookIds || [];
+            const booksToInclude = state.worldBooks.filter(book => 
+              linkedIds.includes(book.id) || book.isGlobal
+            );
+
+            if (booksToInclude.length > 0) {
               worldBookContext =
                 "--- 世界观设定 (必须严格遵守) ---\n" +
-                chat.settings.linkedWorldBookIds
-                  .map((id) => {
-                    const book = state.worldBooks.find((b) => b.id === id);
+                booksToInclude
+                  .map((book) => {
                     return book ? `[${book.name}]: ${book.content}` : "";
                   })
                   .join("\n\n");
@@ -42350,15 +42740,16 @@ ${innerVoicePromptPart}
               linkedMemoryContext = allContexts.filter(Boolean).join("\n");
             }
             let worldBookContext = "";
-            if (
-              chat.settings.linkedWorldBookIds &&
-              chat.settings.linkedWorldBookIds.length > 0
-            ) {
+            const linkedIds = chat.settings.linkedWorldBookIds || [];
+            const booksToInclude = state.worldBooks.filter(book => 
+              linkedIds.includes(book.id) || book.isGlobal
+            );
+
+            if (booksToInclude.length > 0) {
               worldBookContext =
                 "--- 世界观设定 (这是你必须严格遵守的背景) ---\n" +
-                chat.settings.linkedWorldBookIds
-                  .map((id) => {
-                    const book = state.worldBooks.find((b) => b.id === id);
+                booksToInclude
+                  .map((book) => {
                     return book ? `[${book.name}]: ${book.content}` : "";
                   })
                   .join("\n\n");
@@ -47249,66 +47640,90 @@ ${innerVoicePromptPart}
               }
 
               // 从文件名提取名称，作为新的分类名
-              let categoryName = file.name
+              let bookName = file.name
                 .replace(/\.(json|jsonl)$/i, "")
                 .trim();
-              if (!categoryName) categoryName = "导入的世界书";
+              if (!bookName) bookName = "导入的世界书";
 
-              // 检查该分类是否已存在，如果不存在则创建
+              // 检查该分类是否已存在，如果不存在则创建（可选，为了管理方便还是创建一个同名分类）
               let category = await db.worldBookCategories
                 .where("name")
-                .equals(categoryName)
+                .equals(bookName)
                 .first();
+              
               if (!category) {
                 const newCategoryId = await db.worldBookCategories.add({
-                  name: categoryName,
+                  name: bookName,
                 });
-                category = { id: newCategoryId, name: categoryName };
+                category = { id: newCategoryId, name: bookName };
                 console.log(
-                  `创建了新的世界书分类: ${categoryName} (ID: ${newCategoryId})`,
+                  `创建了新的世界书分类: ${bookName} (ID: ${newCategoryId})`,
                 );
               } else {
                 console.log(
-                  `将条目添加到已存在的分类: ${categoryName} (ID: ${category.id})`,
+                  `将条目添加到已存在的分类: ${bookName} (ID: ${category.id})`,
                 );
               }
 
-              const newBooks = [];
+              const newEntries = [];
               // 遍历SillyTavern worldbook中的所有条目
               for (const key in data.entries) {
                 const entry = data.entries[key];
 
                 if (entry) {
-                  // 使用entry.comment作为书名，如果为空则使用"条目 key"作为备用
-                  const entryName = (entry.comment || `条目 ${key}`).trim();
-                  const entryContent = (entry.content || "").trim();
-                  // 确保书名和内容都不为空
-                  if (entryName && entryContent) {
-                    newBooks.push({
-                      id: "wb_" + Date.now() + Math.random(), // 创建唯一ID
-                      name: entryName,
-                      content: entryContent,
-                      categoryId: category.id, // 归属到新的分类
-                    });
-                  }
+                   // 构造注释信息，保留 keys 和 comment
+                   let commentPrefix = "";
+                   // 注意：SillyTavern的entries是一个Object，key本身就是ID，但也可能包含keys字段
+                   // 如果 entry 有 keys 数组
+                   if (entry.keys && Array.isArray(entry.keys)) {
+                     commentPrefix += `// 关键词: ${entry.keys.join(", ")}\n`;
+                   } else if (entry.key && Array.isArray(entry.key)) { // 有些版本可能是 key
+                     commentPrefix += `// 关键词: ${entry.key.join(", ")}\n`;
+                   }
+                   
+                   if (entry.comment) {
+                     commentPrefix += `// 备注: ${entry.comment}\n`;
+                   } else {
+                     // 如果没有comment，把key作为备注
+                     commentPrefix += `// ID: ${key}\n`;
+                   }
+
+                   const entryContent = (entry.content || "").trim();
+                   const finalContent = commentPrefix + entryContent;
+
+                   newEntries.push({
+                     id: "entry_" + Date.now() + Math.random().toString(36).substr(2, 9),
+                     content: finalContent,
+                     enabled: entry.enabled !== false, // 默认为 true
+                   });
                 }
               }
 
-              if (newBooks.length === 0) {
+              if (newEntries.length === 0) {
                 alert("没有找到任何可导入的有效条目。");
                 return;
               }
 
-              // 批量将新书添加到数据库，效率更高
-              await db.worldBooks.bulkAdd(newBooks);
-              // 更新内存中的state，以便UI能立即刷新
-              state.worldBooks.push(...newBooks);
+              // 创建一个新的世界书对象
+              const newBook = {
+                id: "wb_" + Date.now(),
+                name: bookName, // 使用文件名作为书名
+                categoryId: category.id,
+                entries: newEntries,
+                content: newEntries
+                  .filter(e => e.enabled)
+                  .map(e => e.content)
+                  .join("\n\n")
+              };
+
+              await db.worldBooks.add(newBook);
+              state.worldBooks.push(newBook);
 
               // 重新渲染世界书列表，显示新内容
               await renderWorldBookScreen();
               await showCustomAlert(
                 "导入成功",
-                `成功将《${categoryName}》中的 ${newBooks.length} 个条目导入到世界书！`,
+                `成功导入世界书《${bookName}》，包含 ${newEntries.length} 个条目！`,
               );
             } catch (error) {
               console.error("导入世界书失败:", error);
@@ -49812,46 +50227,63 @@ ${innerVoicePromptPart}
               console.log("330导入：已清空共有的数据表，准备导入...");
 
               // 世界书导入逻辑
-              // 不再合并，而是将330的每个词条拆分成独立的世界书条目
               if (data330.worldBooks && Array.isArray(data330.worldBooks)) {
-                const allNewWorldBookEntries = []; // 创建一个新数组来收集所有拆分后的条目
-                let entryCounter = 0; // 用于生成唯一ID
-
+                const allNewWorldBooks = []; // 创建一个新数组来收集所有世界书
+                
                 // 1. 遍历330的每一个“世界书合集”
                 data330.worldBooks.forEach((book_330) => {
+                  // 如果 content 是数组，说明是旧版的多条目格式，转换为新的 entries 格式
                   if (Array.isArray(book_330.content)) {
-                    // 2. 遍历合集中的每一个词条
-                    book_330.content.forEach((entry) => {
-                      entryCounter++;
+                    const newEntries = book_330.content.map(entry => {
+                       // 构造注释信息，保留 keys 和 comment
+                       let commentPrefix = "";
+                       if (entry.keys && Array.isArray(entry.keys)) {
+                         commentPrefix += `// 关键词: ${entry.keys.join(", ")}\n`;
+                       }
+                       if (entry.comment) {
+                         commentPrefix += `// 备注: ${entry.comment}\n`;
+                       }
 
-                      // 3. 为每个词条生成新的独立世界书名称
-                      // 优先使用词条的 `keys` 作为名称，其次是 `comment`，最后是自动生成
-                      let newName = `导入条目 ${entryCounter}`;
-                      if (entry.keys && entry.keys.length > 0) {
-                        newName = entry.keys.join(", "); // 用关键词作为新名称
-                      } else if (entry.comment) {
-                        newName = entry.comment; // 其次用备注作为新名称
-                      }
-
-                      // 4. 为每个词条创建一个全新的、独立的世界书对象
-                      const newBookEntry = {
-                        id: `imported_wb_${Date.now()}_${entryCounter}`, // 生成唯一ID
-                        name: newName,
-                        content: entry.content || "", // 内容就是词条的内容
-                        categoryId: book_330.categoryId || 0, // 继承原合集的分类ID
-                        isEnabled: entry.enabled !== false, // 继承启用状态，默认为true
-                      };
-
-                      // 5. 将这个全新的独立条目添加到我们的收集中
-                      allNewWorldBookEntries.push(newBookEntry);
+                       const finalContent = commentPrefix + (entry.content || "");
+                       
+                       return {
+                         id: "entry_" + Date.now() + Math.random().toString(36).substr(2, 9),
+                         content: finalContent,
+                         enabled: entry.enabled !== false // 默认为 true
+                       };
+                    });
+                    
+                    // 将转换后的书加入列表
+                    allNewWorldBooks.push({
+                      ...book_330,
+                      entries: newEntries,
+                      content: newEntries
+                        .filter(e => e.enabled)
+                        .map(e => e.content)
+                        .join("\n\n")
+                    });
+                  } else {
+                    // 如果 content 已经是字符串，或者是其他格式，直接保留
+                    // 同时为了兼容新格式，也生成一个默认的 entry
+                    const contentStr = book_330.content || "";
+                    const defaultEntry = {
+                      id: "entry_" + Date.now() + Math.random().toString(36).substr(2, 9),
+                      content: contentStr,
+                      enabled: true
+                    };
+                    
+                    allNewWorldBooks.push({
+                      ...book_330,
+                      entries: [defaultEntry],
+                      content: contentStr
                     });
                   }
                 });
 
-                // 6. 一次性将所有拆分后的新条目写入数据库
-                await db.worldBooks.bulkPut(allNewWorldBookEntries);
+                // 一次性写入数据库
+                await db.worldBooks.bulkPut(allNewWorldBooks);
                 console.log(
-                  `330导入：成功“拆分”并导入 ${allNewWorldBookEntries.length} 条独立世界书条目。`,
+                  `330导入：成功导入 ${allNewWorldBooks.length} 本世界书。`,
                 );
               }
               // 分类信息保持不变，正常导入
@@ -50974,9 +51406,8 @@ ${innerVoicePromptPart}
             const item = document.createElement("div");
             item.className = "list-item";
             item.dataset.bookId = book.id;
-            item.innerHTML = `<div class="item-title">${book.name}</div><div class="item-content">${(
-              book.content || "暂无内容..."
-            ).substring(0, 50)}</div>`;
+            const contentPreview = String(book.content || "暂无内容...").substring(0, 50);
+            item.innerHTML = `<div class="item-title">${book.name}</div><div class="item-content">${contentPreview}</div>`;
 
             // 旧的 item.addEventListener('click', ...) 已被移除，由事件委托统一处理
 
@@ -54426,12 +54857,18 @@ ${innerVoicePromptPart}
 
           document
             .getElementById("character-card-input")
-            .addEventListener("change", (event) => {
-              const file = event.target.files[0];
-              if (file) {
-                // 当用户选择了文件后，调用我们的总处理函数
-                handleCharacterImport(file);
+            .addEventListener("change", async (event) => {
+              const files = event.target.files;
+              if (!files || files.length === 0) return;
+              
+              // 单文件：直接导入
+              if (files.length === 1) {
+                handleCharacterImport(files[0]);
+              } else {
+                // 多文件：打开批量选择界面
+                await handleBatchCharacterImport(Array.from(files));
               }
+              
               // 清空选择，这样用户下次还能选择同一个文件
               event.target.value = null;
             });
@@ -54499,19 +54936,123 @@ ${innerVoicePromptPart}
               displayArea.classList.toggle("show-lyrics");
             });
 
-          document
-            .getElementById("add-chat-btn")
-            .addEventListener("click", async () => {
-              const name = await showCustomPrompt(
-                "创建新聊天",
-                "请输入Ta的名字",
-              );
-              if (name && name.trim()) {
-                const newChatId = "chat_" + Date.now();
+          // === 批量导入相关辅助函数 (START) ===
+          async function handleBatchImportChats(files) {
+             const parsedFiles = [];
+             
+             // 1. 解析所有文件
+             for (const file of files) {
+                 if (file.name.endsWith('.zip')) {
+                     try {
+                         const zip = await JSZip.loadAsync(file);
+                         const zipFiles = [];
+                         zip.forEach((relativePath, zipEntry) => {
+                             if (!zipEntry.dir && (zipEntry.name.endsWith('.docx') || zipEntry.name.endsWith('.txt'))) {
+                                 zipFiles.push(zipEntry);
+                             }
+                         });
+                         
+                         for (const zipEntry of zipFiles) {
+                             let content = "";
+                             if (zipEntry.name.endsWith('.docx')) {
+                                 const arrayBuffer = await zipEntry.async("arraybuffer");
+                                 const result = await mammoth.extractRawText({ arrayBuffer });
+                                 content = result.value;
+                             } else {
+                                 content = await zipEntry.async("string");
+                             }
+                             parsedFiles.push({ name: zipEntry.name, content });
+                         }
+                     } catch (e) {
+                         console.error("ZIP解析失败", e);
+                         alert(`解析 ZIP 文件 ${file.name} 失败: ` + e.message);
+                     }
+                 } else {
+                     let content = "";
+                     if (file.name.endsWith('.docx')) {
+                         try {
+                             const arrayBuffer = await file.arrayBuffer();
+                             const result = await mammoth.extractRawText({ arrayBuffer });
+                             content = result.value;
+                         } catch (e) {
+                             console.error("DOCX解析失败", e);
+                             alert(`解析 DOCX 文件 ${file.name} 失败`);
+                             continue;
+                         }
+                     } else if (file.name.endsWith('.txt')) {
+                         content = await file.text();
+                     } else {
+                         continue; 
+                     }
+                     parsedFiles.push({ name: file.name, content });
+                 }
+             }
 
+             // 2. 逐个确认并创建
+             for (const item of parsedFiles) {
+                 await processSingleImport(item);
+             }
+             
+             // 刷新列表
+             renderChatList();
+          }
+
+          async function processSingleImport(item) {
+             // 显示预览弹窗
+             const choice = await showImportConfirmationModal(item.name, item.content);
+             
+             if (choice === 'skip') return;
+             
+             const useContent = (choice === 'yes');
+             const defaultName = item.name.replace(/\.(docx|txt)$/i, '');
+             
+             const name = await showCustomPrompt("输入角色名字", "请输入Ta的名字", defaultName);
+             if (!name || !name.trim()) return;
+             
+             const aiPersona = useContent ? item.content : "你是谁呀。";
+             await createChatInternal(name.trim(), aiPersona);
+          }
+
+          function showImportConfirmationModal(fileName, content) {
+             return new Promise((resolve) => {
+                 const modal = document.getElementById("import-content-modal");
+                 if(!modal) {
+                      // Fallback if modal not found
+                      if(confirm(`解析文件: ${fileName}\n是否将内容作为人设导入？\n(取消则跳过)`)) {
+                          resolve('yes');
+                      } else {
+                          resolve('skip');
+                      }
+                      return;
+                 }
+                 
+                 document.getElementById("import-modal-title").textContent = `解析结果: ${fileName}`;
+                 document.getElementById("import-content-preview").value = content;
+                 
+                 // Remove any old event listeners by cloning nodes (or just reassignment since we control it)
+                 const btnYes = document.getElementById("import-btn-yes");
+                 const btnNo = document.getElementById("import-btn-no");
+                 const btnSkip = document.getElementById("import-btn-skip");
+                 
+                 const close = (val) => {
+                     modal.classList.remove("visible");
+                     resolve(val);
+                 };
+                 
+                 btnYes.onclick = () => close('yes');
+                 btnNo.onclick = () => close('no');
+                 btnSkip.onclick = () => close('skip');
+                 
+                 modal.classList.add("visible");
+             });
+          }
+
+          async function createChatInternal(name, aiPersona) {
+                const newChatId = "chat_" + Date.now() + Math.floor(Math.random() * 1000);
+                
                 const newChat = {
                   id: newChatId,
-                  name: name.trim(),
+                  name: name,
                   isGroup: false,
                   isPinned: false,
                   npcLibrary: [], // 角色专属NPC库
@@ -54526,7 +55067,7 @@ ${innerVoicePromptPart}
                     isBusy: false,
                   },
                   settings: {
-                    aiPersona: "你是谁呀。",
+                    aiPersona: aiPersona,
                     myPersona: "我是谁呀。",
                     maxMemory: 10,
                     aiAvatar: defaultAvatar,
@@ -54574,7 +55115,38 @@ ${innerVoicePromptPart}
 
                 state.chats[newChatId] = newChat;
                 await db.chats.put(newChat);
-                renderChatList();
+          }
+          // === 批量导入相关辅助函数 (END) ===
+
+          document
+            .getElementById("add-chat-btn")
+            .addEventListener("click", async () => {
+              const choice = await showChoiceModal("添加聊天", [
+                  { text: "手动创建", value: "manual" },
+                  { text: "批量导入 (docx/txt/zip)", value: "import" }
+              ]);
+
+              if (choice === "import") {
+                  const input = document.createElement("input");
+                  input.type = "file";
+                  input.accept = ".docx, .txt, .zip";
+                  input.multiple = true;
+                  input.onchange = async (e) => {
+                      if(e.target.files.length) await handleBatchImportChats(Array.from(e.target.files));
+                  };
+                  input.click();
+                  return;
+              }
+
+              if (choice !== "manual") return;
+
+              const name = await showCustomPrompt(
+                "创建新聊天",
+                "请输入Ta的名字",
+              );
+              if (name && name.trim()) {
+                 await createChatInternal(name.trim(), "你是谁呀。");
+                 renderChatList();
               }
             });
 
@@ -55523,6 +56095,16 @@ ${innerVoicePromptPart}
               }
             });
           document
+            .getElementById("add-world-book-entry-btn")
+            .addEventListener("click", () => {
+              renderWorldBookEntry({
+                id: Date.now().toString(),
+                content: "",
+                enabled: true
+              });
+            });
+
+          document
             .getElementById("save-world-book-btn")
             .addEventListener("click", async () => {
               if (!editingWorldBookId) return;
@@ -55538,9 +56120,29 @@ ${innerVoicePromptPart}
                   return;
                 }
                 book.name = newName;
-                book.content = document.getElementById(
-                  "world-book-content-input",
-                ).value;
+                
+                // Collect entries
+                const entryDivs = document.querySelectorAll(".world-book-entry-item");
+                const entries = [];
+                let contentString = "";
+
+                entryDivs.forEach(div => {
+                   const enabled = div.querySelector(".entry-enabled-switch").checked;
+                   const content = div.querySelector(".entry-content-input").value;
+                   
+                   entries.push({
+                     id: div.dataset.id || Date.now().toString(),
+                     content: content,
+                     enabled: enabled
+                   });
+
+                   if (enabled) {
+                     contentString += (content + "\n");
+                   }
+                });
+
+                book.entries = entries;
+                book.content = contentString.trim();
 
                 // 【核心修改】在这里保存分类ID
                 const categoryId = document.getElementById(
@@ -55548,6 +56150,10 @@ ${innerVoicePromptPart}
                 ).value;
                 // 如果选择了“未分类”，存入 null；否则存入数字ID
                 book.categoryId = categoryId ? parseInt(categoryId) : null;
+                // 【新增】保存是否全局世界书
+                book.isGlobal = document.getElementById("world-book-is-global-checkbox").checked;
+                // 【新增】保存注入位置
+                book.position = document.getElementById("world-book-position-select").value;
 
                 await db.worldBooks.put(book);
                 document.getElementById("world-book-editor-title").textContent =
@@ -56527,14 +57133,21 @@ ${innerVoicePromptPart}
                   bookContainer.dataset.containerFor = category.id;
 
                   booksInCategory.forEach((book) => {
-                    const isChecked = linkedIds.has(book.id);
+                    const isLinked = linkedIds.has(book.id);
+                    const isGlobal = book.isGlobal;
+                    const isChecked = isLinked || isGlobal;
+                    // 如果是全局书，则强制勾选并禁用
+                    const isDisabled = isGlobal;
+                    const displayName = book.name + (isGlobal ? " (全局)" : "");
+
                     const label = document.createElement("label");
-                    // 给书名包一个span，方便CSS做省略号处理
+                    // data-is-global 用于保存时识别
+                    // isGlobal 时使用 checked 且 disabled
                     label.innerHTML = `<input type="checkbox" class="wb-book-checkbox" value="${
                       book.id
-                    }" data-parent-category="${category.id}" ${
+                    }" data-parent-category="${category.id}" data-is-global="${isGlobal}" ${
                       isChecked ? "checked" : ""
-                    }> <span class="wb-book-name">${book.name}</span>`;
+                    } ${isDisabled ? "disabled" : ""}> <span class="wb-book-name">${displayName}</span>`;
                     bookContainer.appendChild(label);
                   });
 
@@ -56806,9 +57419,21 @@ ${innerVoicePromptPart}
               const checkedBooks = document.querySelectorAll(
                 "#world-book-checkboxes-container input.wb-book-checkbox:checked",
               );
-              chat.settings.linkedWorldBookIds = Array.from(checkedBooks).map(
-                (cb) => cb.value,
-              );
+              chat.settings.linkedWorldBookIds = Array.from(checkedBooks)
+                .map((cb) => {
+                  const id = cb.value;
+                  const isGlobal = cb.getAttribute("data-is-global") === "true";
+                  
+                  // 如果是全局书（强制勾选且disabled），我们只在它原本就在列表中时才保存它
+                  // 这样避免因为“全局强制勾选”而污染了用户的“手动关联列表”
+                  if (isGlobal) {
+                    const originalList = chat.settings.linkedWorldBookIds || [];
+                    return originalList.includes(id) ? id : null;
+                  }
+                  
+                  return id;
+                })
+                .filter(id => id !== null);
 
               if (chat.isGroup) {
                 chat.settings.myNickname = document
@@ -64682,6 +65307,7 @@ ${innerVoicePromptPart}
       type="file"
       id="character-card-input"
       accept=".png, .json"
+      multiple
       style="display: none"
     />
 
@@ -64694,5 +65320,79 @@ ${innerVoicePromptPart}
     <input type="file" id="ludo-qbank-import-input" accept=".json" hidden />
     <input type="file" id="inner-voice-bg-input" accept="image/*" hidden />
     <input type="file" id="script-kill-import-input" accept=".json" hidden />
+    <!-- 导入内容预览弹窗 (美化版) -->
+    <div id="import-content-modal" class="modal" style="z-index: 10010;">
+      <div class="custom-modal-content" style="width: 600px; max-width: 95%; display: flex; flex-direction: column; height: 80vh; border-radius: 20px; overflow: hidden; background: var(--bg-primary, #fff);">
+        
+        <!-- 头部 -->
+        <div class="custom-modal-header" id="import-modal-title" style="padding: 15px 20px; border-bottom: 1px solid var(--border-color, #eee); font-size: 18px; font-weight: bold; background: var(--bg-secondary, #f9f9f9);">
+          导入内容预览
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="custom-modal-body" id="import-modal-body" style="flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 20px;">
+          <p style="margin-bottom: 10px; font-weight: 500; color: var(--text-secondary, #666);">解析内容如下：</p>
+          
+          <textarea id="import-content-preview" readonly 
+            style="width: 100%; flex: 1; padding: 15px; border: 1px solid var(--border-color, #ddd); border-radius: 12px; resize: none; font-family: inherit; font-size: 14px; line-height: 1.6; box-sizing: border-box; background: var(--bg-secondary, #f5f5f5); color: var(--text-primary, #333); outline: none;">
+          </textarea>
+
+          <p style="margin-top: 15px; text-align: center; color: var(--text-secondary, #666); font-size: 14px;">
+            是否将此内容填入“对方的人设”？
+          </p>
+        </div>
+
+        <!-- 底部按钮 -->
+        <div class="custom-modal-footer" style="padding: 15px 20px; background: var(--bg-secondary, #f9f9f9); border-top: 1px solid var(--border-color, #eee); display: flex; justify-content: space-between; align-items: center;">
+          
+          <button id="import-btn-skip" style="padding: 10px 20px; border-radius: 10px; border: 1px solid #ddd; background: #fff; color: #666; font-size: 14px; cursor: pointer; transition: all 0.2s;">
+            跳过此文件
+          </button>
+          
+          <div style="display: flex; gap: 12px;">
+            <button id="import-btn-no" style="padding: 10px 20px; border-radius: 10px; border: 1px solid #ff4d4f; color: #ff4d4f; background: #fff; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+              不填入 (仅创建)
+            </button>
+            <button id="import-btn-yes" style="padding: 10px 24px; border-radius: 10px; border: none; background: #007aff; color: white; font-size: 14px; font-weight: 600; box-shadow: 0 2px 8px rgba(0,122,255,0.3); cursor: pointer; transition: all 0.2s;">
+              填入并创建
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- 批量角色卡选择弹窗 -->
+    <div id="character-batch-select-modal" class="modal" style="z-index: 10010;">
+      <div class="custom-modal-content" style="width: 700px; max-width: 95%; display: flex; flex-direction: column; height: 85vh; border-radius: 20px; overflow: hidden; background: var(--bg-primary, #fff);">
+        
+        <!-- 头部 -->
+        <div style="padding: 15px 20px; border-bottom: 1px solid var(--border-color, #eee); background: var(--bg-secondary, #f9f9f9); display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 18px; font-weight: bold;">选择要导入的角色卡</div>
+            <div style="font-size: 12px; color: #999; margin-top: 4px;">共 <span id="char-batch-total">0</span> 个角色，已选择 <span id="char-batch-selected">0</span> 个</div>
+          </div>
+          <button id="char-batch-select-all" style="padding: 8px 16px; border-radius: 8px; border: 1px solid #007aff; background: #fff; color: #007aff; font-size: 13px; cursor: pointer; transition: all 0.2s;">
+            全选
+          </button>
+        </div>
+
+        <!-- 角色卡列表 -->
+        <div style="flex: 1; overflow-y: auto; padding: 15px;" id="character-batch-list">
+          <!-- 动态填充角色卡列表 -->
+        </div>
+
+        <!-- 底部按钮 -->
+        <div style="padding: 15px 20px; background: var(--bg-secondary, #f9f9f9); border-top: 1px solid var(--border-color, #eee); display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+          <button id="char-batch-cancel" style="padding: 10px 20px; border-radius: 10px; border: 1px solid #ddd; background: #fff; color: #666; font-size: 14px; cursor: pointer; transition: all 0.2s; flex: 1;">
+            取消
+          </button>
+          <button id="char-batch-confirm" style="padding: 10px 24px; border-radius: 10px; border: none; background: #007aff; color: white; font-size: 14px; font-weight: 600; box-shadow: 0 2px 8px rgba(0,122,255,0.3); cursor: pointer; transition: all 0.2s; flex: 1;">
+            导入选中的角色
+          </button>
+        </div>
+
+      </div>
+    </div>
   </body>
 </html>

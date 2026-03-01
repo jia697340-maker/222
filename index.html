@@ -7605,7 +7605,7 @@
                 type="range"
                 id="minimax-speed-slider"
                 min="0.5"
-                max="2.8"
+                max="2"
                 step="0.1"
                 value="1.0"
                 class="moe-slider"
@@ -23508,7 +23508,7 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             minimaxGroupId: "",
             minimaxApiKey: "",
             minimaxProvider: "cn",
-            minimaxSpeechModel: "speech-2.8-hd",
+            minimaxSpeechModel: "speech-01-turbo",
             pollinationsApiKey: "", // <--- 新增这一行
           };
 
@@ -24085,10 +24085,8 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
           if (!modelSelect) return;
           modelSelect.innerHTML = ""; // 清空旧选项
 
-          // 从文档中获取的完整模型列表（含 2.8，与 TUT 一致）
+          // 从文档中获取的完整模型列表
           const models = [
-            "speech-2.8-hd",
-            "speech-2.8-turbo",
             "speech-2.6-hd",
             "speech-2.6-turbo",
             "speech-02-hd",
@@ -24104,9 +24102,9 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             modelSelect.appendChild(option);
           });
 
-          // 自动选中当前已保存的模型，如果没有则使用 2.8-hd 推荐默认值
+          // 自动选中当前已保存的模型，如果没有则使用一个推荐的默认值
           modelSelect.value =
-            state.apiConfig.minimaxSpeechModel || "speech-2.8-hd";
+            state.apiConfig.minimaxSpeechModel || "speech-01-turbo";
 
           alert("Minimax 语音模型列表已更新！");
         }
@@ -24692,9 +24690,9 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             "minimax-speech-model-select",
           );
           if (speechModelSelect) {
-            // 获取保存的模型，如果没有则默认为 speech-2.8-hd
+            // 获取保存的模型，如果没有则默认为 speech-01-turbo
             const savedSpeechModel =
-              state.apiConfig.minimaxSpeechModel || "speech-2.8-hd";
+              state.apiConfig.minimaxSpeechModel || "speech-01-turbo";
 
             // 检查下拉框里有没有这个选项
             let optionExists = Array.from(speechModelSelect.options).some(
@@ -51106,11 +51104,11 @@ ${innerVoicePromptPart}
 
           const provider = state.apiConfig.minimaxProvider || "cn";
           const speechModel =
-            state.apiConfig.minimaxSpeechModel || "speech-2.8-hd";
+            state.apiConfig.minimaxSpeechModel || "speech-01-turbo";
           const baseUrl =
             provider === "cn"
               ? "https://api.minimaxi.com"
-              : "https://api.minimax.chat";
+              : "https://api.minimax.io";
           const requestUrl = `${baseUrl}/v1/t2a_v2`;
           // 1. 从当前角色的设置中读取语速和语言增强
           const speed = chat.settings.speed ?? 1.0;
@@ -51120,23 +51118,14 @@ ${innerVoicePromptPart}
             .replace(/\(.*?\)|（.*?）|【.*?】/g, "")
             .trim();
 
-          // 2. 构建包含新参数的请求体（与 TUT 可用的 TTS 请求结构一致）
+          // 2. 构建包含新参数的请求体
           const requestBody = {
             model: speechModel,
-            text: textForTts,
-            stream: false,
+            text: textForTts, // <--- 核心修改在这里！使用过滤后的文本
             voice_setting: {
               voice_id: voiceId,
-              speed: speed,
-              vol: 1,
-              pitch: 0
+              speed: speed, // ★ 在这里加入语速
             },
-            audio_setting: {
-              sample_rate: 32000,
-              bitrate: 128000,
-              format: "mp3",
-              channel: 1
-            }
           };
 
           // 3. 如果 language_boost 有效，才将它添加到请求体中

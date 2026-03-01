@@ -85,7 +85,6 @@
     <script src="sticker-search.js"></script>
     <script src="my-phone.js" defer></script>
     <script src="my-phone-ui.js" defer></script>
-    <script src="my-phone-ui.js" defer></script>
     <script src="period-tracker.js" defer></script>
     <script src="observer-group.js" defer></script>
     <script src="update-notice.js" defer></script>
@@ -4803,22 +4802,12 @@
                 </span>
                 <span
                   class="action-btn"
-                  id="generate-chat-message-btn"
-                  title="生成新聊天"
+                  id="random-refresh-chats-btn"
+                  title="随机刷新聊天"
                 >
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path
-                      d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
-                    />
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M23 4v6h-6M1 20v-6h6"/>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L20.5 10M3.5 14a9 9 0 0 1 14.85 3.36L20.5 14"/>
                   </svg>
                 </span>
               </div>
@@ -5792,59 +5781,6 @@
         </div>
       </div>
     </div>
-    <!-- “查手机”功能-生成聊天对象选择弹窗 -->
-    <div id="chat-gen-selector-modal" class="modal">
-      <div class="modal-content" style="height: 70%">
-        <div class="modal-header">
-          <span>选择聊天对象</span>
-        </div>
-        <div
-          class="modal-body"
-          style="padding: 0; display: flex; flex-direction: column"
-        >
-          <!-- 顶部：随机选项 -->
-          <div
-            style="
-              padding: 15px;
-              border-bottom: 1px solid var(--border-color);
-              background: var(--secondary-bg);
-            "
-          >
-            <label class="toggle-switch-label" style="margin: 0">
-              <span class="toggle-switch-text" style="font-weight: bold"
-                >🎲 随机生成 (AI决定)</span
-              >
-              <input type="checkbox" id="chat-gen-random-checkbox" checked />
-              <span class="toggle-switch-slider"></span>
-            </label>
-            <p
-              style="
-                font-size: 12px;
-                color: var(--text-secondary);
-                margin-top: 5px;
-                margin-bottom: 0;
-              "
-            >
-              关闭后可指定下方特定角色/NPC。
-            </p>
-          </div>
-
-          <!-- 列表：特定角色选择 -->
-          <div
-            id="chat-gen-list"
-            class="contact-picker-list"
-            style="flex-grow: 1; opacity: 0.5; pointer-events: none"
-          >
-            <!-- 列表项由JS生成 -->
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="cancel" id="cancel-chat-gen-btn">取消</button>
-          <button class="save" id="confirm-chat-gen-btn">开始生成</button>
-        </div>
-      </div>
-    </div>
-
     <div id="generation-overlay" class="modal">
       <div class="loading-content">
         <!-- 这是一个粉色的猫爪爪 -->
@@ -6430,7 +6366,7 @@
     <div id="password-modal-overlay" class="modal">
       <div class="password-modal-content">
         <p>请输入密码</p>
-        <input type="password" id="password-input-field" maxlength="20" />
+        <input type="text" id="password-input-field" maxlength="20" autocomplete="off" />
         <div class="password-actions">
           <button id="password-cancel-btn">取消</button>
           <button id="password-confirm-btn">进入</button>
@@ -7669,7 +7605,7 @@
                 type="range"
                 id="minimax-speed-slider"
                 min="0.5"
-                max="2"
+                max="2.8"
                 step="0.1"
                 value="1.0"
                 class="moe-slider"
@@ -11193,7 +11129,7 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             id="open-aurora-bookshelf-btn"
             class="action-btn"
             style="font-size: 14px"
-            >📚 书架</span
+            >书架</span
           >
         </div>
         <div class="modal-body">
@@ -19008,6 +18944,7 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
         let editingPersonaPresetId = null;
         let activeCharPhonePresetId = null; // 用于追踪角色手机外观预设的选择
         let activeCharacterPhoneId = null;
+        window.activeCharacterPhoneId = null; // 供 my-phone-ui.js 等外部脚本使用
         let waimaiTimers = {}; // 用于存储外卖倒计时
         let editingSpriteGroupId = null;
         let activeMessageTimestamp = null;
@@ -23571,7 +23508,7 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             minimaxGroupId: "",
             minimaxApiKey: "",
             minimaxProvider: "cn",
-            minimaxSpeechModel: "speech-01-turbo",
+            minimaxSpeechModel: "speech-2.8-hd",
             pollinationsApiKey: "", // <--- 新增这一行
           };
 
@@ -24148,8 +24085,10 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
           if (!modelSelect) return;
           modelSelect.innerHTML = ""; // 清空旧选项
 
-          // 从文档中获取的完整模型列表
+          // 从文档中获取的完整模型列表（含 2.8，与 TUT 一致）
           const models = [
+            "speech-2.8-hd",
+            "speech-2.8-turbo",
             "speech-2.6-hd",
             "speech-2.6-turbo",
             "speech-02-hd",
@@ -24165,9 +24104,9 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             modelSelect.appendChild(option);
           });
 
-          // 自动选中当前已保存的模型，如果没有则使用一个推荐的默认值
+          // 自动选中当前已保存的模型，如果没有则使用 2.8-hd 推荐默认值
           modelSelect.value =
-            state.apiConfig.minimaxSpeechModel || "speech-01-turbo";
+            state.apiConfig.minimaxSpeechModel || "speech-2.8-hd";
 
           alert("Minimax 语音模型列表已更新！");
         }
@@ -24753,9 +24692,9 @@ lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer
             "minimax-speech-model-select",
           );
           if (speechModelSelect) {
-            // 获取保存的模型，如果没有则默认为 speech-01-turbo
+            // 获取保存的模型，如果没有则默认为 speech-2.8-hd
             const savedSpeechModel =
-              state.apiConfig.minimaxSpeechModel || "speech-01-turbo";
+              state.apiConfig.minimaxSpeechModel || "speech-2.8-hd";
 
             // 检查下拉框里有没有这个选项
             let optionExists = Array.from(speechModelSelect.options).some(
@@ -44598,6 +44537,7 @@ ${innerVoicePromptPart}
 
         function openCharacterPhone(chatId) {
           activeCharacterPhoneId = chatId;
+          window.activeCharacterPhoneId = chatId;
           const chat = state.chats[chatId];
           if (!chat) return;
 
@@ -44744,86 +44684,8 @@ ${innerVoicePromptPart}
           });
         }
 
-        /**
-         * 打开生成聊天对象的选择弹窗
-         */
-        function openChatGenerationModal() {
-          const listEl = document.getElementById("chat-gen-list");
-          listEl.innerHTML = "";
-
-          if (!activeCharacterPhoneId) return;
-          const currentChat = state.chats[activeCharacterPhoneId];
-
-          // 1. 重置 UI 状态
-          const randomCheckbox = document.getElementById(
-            "chat-gen-random-checkbox",
-          );
-          randomCheckbox.checked = true; // 默认随机
-          listEl.style.opacity = "0.5";
-          listEl.style.pointerEvents = "none";
-
-          // 2. 收集所有可选项 (NPC + 其他主角)
-          const options = [];
-
-          // A. 当前角色的 NPC 库
-          if (currentChat.npcLibrary) {
-            currentChat.npcLibrary.forEach((npc) => {
-              options.push({
-                type: "NPC",
-                name: npc.name,
-                persona: npc.persona,
-                avatar: npc.avatar || defaultGroupMemberAvatar,
-              });
-            });
-          }
-
-          // B. 其他主角 (state.chats 里的单聊角色，排除自己)
-          Object.values(state.chats).forEach((otherChat) => {
-            if (!otherChat.isGroup && otherChat.id !== currentChat.id) {
-              options.push({
-                type: "角色",
-                name: otherChat.name,
-                persona: otherChat.settings.aiPersona,
-                avatar: otherChat.settings.aiAvatar || defaultAvatar,
-              });
-            }
-          });
-
-          if (options.length === 0) {
-            listEl.innerHTML =
-              '<p style="text-align:center; padding:20px; color:#888;">暂无可选角色/NPC，请使用随机模式。</p>';
-          } else {
-            options.forEach((opt) => {
-              const item = document.createElement("div");
-              item.className = "contact-picker-item"; // 复用现有的样式
-              // 将人设经过简单处理存入 dataset (避免太长或有特殊字符)
-              const safePersona = (opt.persona || "").replace(/"/g, "&quot;");
-
-              item.innerHTML = `
-			                                <input type="checkbox" data-name="${opt.name}" data-persona="${safePersona}" style="margin-right: 10px;">
-			                                <img src="${opt.avatar}" class="avatar">
-			                                <div style="display:flex; flex-direction:column;">
-			                                    <span class="name">${opt.name}</span>
-			                                    <span style="font-size:12px; color:#888;">${opt.type}</span>
-			                                </div>
-			                            `;
-
-              // 点击整行触发 checkbox
-              item.addEventListener("click", (e) => {
-                if (e.target.tagName !== "INPUT") {
-                  const cb = item.querySelector("input");
-                  cb.checked = !cb.checked;
-                }
-              });
-
-              listEl.appendChild(item);
-            });
-          }
-
-          document
-            .getElementById("chat-gen-selector-modal")
-            .classList.add("visible");
-        }
+        /** 已移除：指定NPC/角色生成聊天功能，保留空函数避免残留引用报错 */
+        function openChatGenerationModal() {}
 
         /**
          * 为“查手机”功能单独生成某一项数据的通用函数
@@ -46473,6 +46335,17 @@ ${innerVoicePromptPart}
             listEl.appendChild(itemEl);
           });
         }
+
+        // 供 my-phone-ui.js 等外部脚本调用的渲染函数
+        window.renderCharacterChatList = renderCharacterChatList;
+        window.renderCharacterMemos = renderCharacterMemos;
+        window.renderCharacterShoppingCart = renderCharacterShoppingCart;
+        window.renderCharacterBrowser = renderCharacterBrowser;
+        window.renderCharacterPhotoAlbum = renderCharacterPhotoAlbum;
+        window.renderCharacterBank = renderCharacterBank;
+        window.renderCharacterTrajectory = renderCharacterTrajectory;
+        window.renderCharacterAppUsage = renderCharacterAppUsage;
+        window.renderCharacterDiary = renderCharacterDiary;
 
         /**
          * 【日记】独立刷新，生成新的日记条目
@@ -51233,7 +51106,7 @@ ${innerVoicePromptPart}
 
           const provider = state.apiConfig.minimaxProvider || "cn";
           const speechModel =
-            state.apiConfig.minimaxSpeechModel || "speech-01-turbo";
+            state.apiConfig.minimaxSpeechModel || "speech-2.8-hd";
           const baseUrl =
             provider === "cn"
               ? "https://api.minimaxi.com"
@@ -51247,14 +51120,23 @@ ${innerVoicePromptPart}
             .replace(/\(.*?\)|（.*?）|【.*?】/g, "")
             .trim();
 
-          // 2. 构建包含新参数的请求体
+          // 2. 构建包含新参数的请求体（与 TUT 可用的 TTS 请求结构一致）
           const requestBody = {
             model: speechModel,
-            text: textForTts, // <--- 核心修改在这里！使用过滤后的文本
+            text: textForTts,
+            stream: false,
             voice_setting: {
               voice_id: voiceId,
-              speed: speed, // ★ 在这里加入语速
+              speed: speed,
+              vol: 1,
+              pitch: 0
             },
+            audio_setting: {
+              sample_rate: 32000,
+              bitrate: 128000,
+              format: "mp3",
+              channel: 1
+            }
           };
 
           // 3. 如果 language_boost 有效，才将它添加到请求体中
@@ -51778,7 +51660,16 @@ ${innerVoicePromptPart}
                     
                     try {
                         let text = "";
-                        const blob = await fileEntry.async("blob");
+                        // 兼容两种来源：JSZip的zipEntry（有async方法）和包装后的普通File对象（有getBlob方法）
+                        let blob;
+                        if (typeof fileEntry.async === "function") {
+                            blob = await fileEntry.async("blob");
+                        } else if (typeof fileEntry.getBlob === "function") {
+                            blob = await fileEntry.getBlob();
+                        } else {
+                            // 如果本身就是Blob/File
+                            blob = fileEntry;
+                        }
                         if (fileEntry.name.toLowerCase().endsWith(".docx")) {
                             const arrayBuffer = await blob.arrayBuffer();
                             const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
@@ -51889,28 +51780,28 @@ ${innerVoicePromptPart}
 
             modal.classList.add("visible");
 
-            const cleanup = () => {
-                modal.classList.remove("visible");
-                btnSkip.style.display = ""; 
-                btnNo.textContent = "不填入 (仅创建)";
-                btnNo.style.border = "1px solid #ff4d4f";
-                btnNo.style.color = "#ff4d4f";
-                btnYes.textContent = "填入并创建";
-                
-                const newNo = btnNo.cloneNode(true);
-                const newYes = btnYes.cloneNode(true);
-                const newSkip = btnSkip.cloneNode(true);
-                btnNo.parentNode.replaceChild(newNo, btnNo);
-                btnYes.parentNode.replaceChild(newYes, btnYes);
-                btnSkip.parentNode.replaceChild(newSkip, btnSkip);
-            };
-
             const newNo = btnNo.cloneNode(true);
             const newYes = btnYes.cloneNode(true);
             const newSkip = btnSkip.cloneNode(true);
             btnNo.parentNode.replaceChild(newNo, btnNo);
             btnYes.parentNode.replaceChild(newYes, btnYes);
             btnSkip.parentNode.replaceChild(newSkip, btnSkip);
+
+            const cleanup = () => {
+                modal.classList.remove("visible");
+                newSkip.style.display = ""; 
+                newNo.textContent = "不填入 (仅创建)";
+                newNo.style.border = "1px solid #ff4d4f";
+                newNo.style.color = "#ff4d4f";
+                newYes.textContent = "填入并创建";
+                
+                const resetNo = newNo.cloneNode(true);
+                const resetYes = newYes.cloneNode(true);
+                const resetSkip = newSkip.cloneNode(true);
+                newNo.parentNode.replaceChild(resetNo, newNo);
+                newYes.parentNode.replaceChild(resetYes, newYes);
+                newSkip.parentNode.replaceChild(resetSkip, newSkip);
+            };
 
             newNo.onclick = () => cleanup();
             newSkip.onclick = () => cleanup();
@@ -58870,8 +58761,8 @@ ${innerVoicePromptPart}
               if (actionBtn) {
                 switch (actionBtn.id) {
                   // --- 单独生成按钮 ---
-                  case "generate-chat-message-btn":
-                    openChatGenerationModal();
+                  case "random-refresh-chats-btn":
+                    generateCharacterPhoneDataSegment("chats", null);
                     break;
                   case "generate-cart-item-btn":
                     generateCharacterPhoneDataSegment("shoppingCart");
@@ -60408,6 +60299,58 @@ ${innerVoicePromptPart}
               }
               // 每次用完后清空，这样用户下次还能选择同一个文件
               e.target.value = null;
+            });
+
+          // 绑定 TXT/DOCX/ZIP 世界书导入
+          document
+            .getElementById("world-book-doc-import-input")
+            .addEventListener("change", async (e) => {
+              const files = Array.from(e.target.files);
+              e.target.value = null;
+              if (!files.length) return;
+
+              // 收集所有待处理的文件项（展开ZIP）
+              const allItems = [];
+
+              for (const file of files) {
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (ext === 'zip') {
+                  try {
+                    const zip = await JSZip.loadAsync(file);
+                    zip.forEach((relativePath, zipEntry) => {
+                      if (zipEntry.dir) return;
+                      const name = zipEntry.name;
+                      if (name.includes("__MACOSX") || name.startsWith(".")) return;
+                      const lower = name.toLowerCase();
+                      if (lower.endsWith('.txt') || lower.endsWith('.docx')) {
+                        allItems.push(zipEntry); // JSZip entry，有 async 方法
+                      }
+                    });
+                  } catch (err) {
+                    console.error("读取ZIP失败:", err);
+                    await showCustomAlert("导入失败", `ZIP文件 "${file.name}" 读取失败: ${err.message}`);
+                  }
+                } else if (ext === 'txt' || ext === 'docx') {
+                  // 包装原生File，让它和zipEntry有统一的接口
+                  const wrappedFile = file;
+                  wrappedFile._isNativeFile = true;
+                  allItems.push(wrappedFile);
+                }
+              }
+
+              if (allItems.length === 0) {
+                await showCustomAlert("无可导入文件", "未找到任何 .txt 或 .docx 文件。");
+                return;
+              }
+
+              // 单文件直接走预览确认流程
+              if (allItems.length === 1 && allItems[0]._isNativeFile) {
+                handleWorldBookDocImport(allItems[0]);
+                return;
+              }
+
+              // 多文件走批量选择模态框
+              showWorldBookBatchModal(allItems);
             });
 
           // 绑定“编辑模式”按钮
@@ -67856,65 +67799,6 @@ ${innerVoicePromptPart}
               }
             });
 
-          // 查手机-生成聊天选择器事件绑定
-          document
-            .getElementById("cancel-chat-gen-btn")
-            .addEventListener("click", () => {
-              document
-                .getElementById("chat-gen-selector-modal")
-                .classList.remove("visible");
-            });
-
-          // 随机开关切换时，启用/禁用列表
-          document
-            .getElementById("chat-gen-random-checkbox")
-            .addEventListener("change", (e) => {
-              const list = document.getElementById("chat-gen-list");
-              if (e.target.checked) {
-                list.style.opacity = "0.5";
-                list.style.pointerEvents = "none";
-                // 清空所有勾选
-                list
-                  .querySelectorAll('input[type="checkbox"]')
-                  .forEach((cb) => (cb.checked = false));
-              } else {
-                list.style.opacity = "1";
-                list.style.pointerEvents = "auto";
-              }
-            });
-
-          document
-            .getElementById("confirm-chat-gen-btn")
-            .addEventListener("click", () => {
-              const isRandom = document.getElementById(
-                "chat-gen-random-checkbox",
-              ).checked;
-              let selectedTargets = null;
-
-              if (!isRandom) {
-                // 如果不是随机，收集选中的对象
-                selectedTargets = [];
-                document
-                  .querySelectorAll("#chat-gen-list input:checked")
-                  .forEach((checkbox) => {
-                    selectedTargets.push({
-                      name: checkbox.dataset.name,
-                      persona: checkbox.dataset.persona,
-                    });
-                  });
-
-                if (selectedTargets.length === 0) {
-                  alert("请至少选择一个聊天对象，或者开启随机模式。");
-                  return;
-                }
-              }
-
-              document
-                .getElementById("chat-gen-selector-modal")
-                .classList.remove("visible");
-              // 调用生成函数，传入选中的目标（如果是随机则为null）
-              generateCharacterPhoneDataSegment("chats", selectedTargets);
-            });
           // 快捷回复事件绑定
           document
             .getElementById("quick-reply-btn")
@@ -70092,7 +69976,8 @@ window.renderCoupleAvatarLibraryList = renderCoupleAvatarLibraryList;
       type="file" 
       id="world-book-doc-import-input" 
       accept=".txt, .docx, .zip" 
-      style="display: none" 
+      style="display: none"
+      multiple
     />
 
     <input type="file" id="ludo-qbank-import-input" accept=".json" hidden />

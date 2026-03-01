@@ -5948,6 +5948,8 @@ body {
   text-align: center;
   box-sizing: border-box;
   background-color: rgba(255, 255, 255, 0.7);
+  -webkit-text-security: disc; /* iOS/Safari 密码遮罩 */
+  font-family: text-security-disc; /* 标准密码遮罩 */
 }
 #password-input-field:focus {
   outline: none;
